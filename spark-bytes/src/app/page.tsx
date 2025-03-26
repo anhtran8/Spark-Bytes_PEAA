@@ -19,9 +19,6 @@ export default function Home() {
           <Link href="/login" style={{ color: 'white', marginRight: '1.5rem', textDecoration: 'none' }}>
             Log In
           </Link>
-          <Link href="/signup" style={{ color: 'white', textDecoration: 'none' }}>
-            Sign Up
-          </Link>
         </div>
       </nav>
 
