@@ -37,6 +37,24 @@ export default function AboutPage() {
           </section>
           
           <section style={{ marginBottom: '2rem' }}>
+            <h2 style={{ color: '#c00', marginBottom: '1rem' }}>Authors</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <h3 style={{ margin: '0 0 0.5rem 0' }}>Akemi</h3>
+              </div>
+              <div>
+                <h3 style={{ margin: '0 0 0.5rem 0' }}>Pavana</h3>
+              </div>
+              <div>
+                <h3 style={{ margin: '0 0 0.5rem 0' }}>Anh</h3>
+              </div>
+              <div>
+                <h3 style={{ margin: '0 0 0.5rem 0' }}>Eva</h3>
+              </div>
+            </div>
+          </section>
+          
+          <section style={{ marginBottom: '2rem' }}>
             <h2 style={{ color: '#c00', marginBottom: '1rem' }}>Join Us</h2>
             <p style={{ fontSize: '1.1rem', lineHeight: '1.6' }}>
               Sign up with your BU email to start posting events or finding free food opportunities around campus.

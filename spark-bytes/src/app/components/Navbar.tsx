@@ -37,25 +37,21 @@ const Navbar = () => {
                 <Link href="/about" style={{ color: 'white', textDecoration: 'none' }}>
                     About
                 </Link>
-                
-                {isLoggedIn ? (
+
+                {isLoggedIn && (
                     <button 
-                        onClick={() => signOut({ callbackUrl: '/' })}
-                        style={{
-                            backgroundColor: 'transparent',
-                            color: 'white',
-                            border: '1px solid white',
-                            borderRadius: '5px',
-                            padding: '0.5rem 1rem',
-                            cursor: 'pointer',
-                        }}
-                    >
-                        Sign Out
-                    </button>
-                ) : (
-                    <Link href="/" style={{ color: 'white', textDecoration: 'none' }}>
-                        Sign In
-                    </Link>
+                    onClick={() => signOut({ callbackUrl: '/' })}
+                    style={{
+                        backgroundColor: 'transparent',
+                        color: 'white',
+                        border: '1px solid white',
+                        borderRadius: '5px',
+                        padding: '0.5rem 1rem',
+                        cursor: 'pointer',
+                    }}
+                >
+                    Sign Out
+                </button>
                 )}
             </div>
         </nav>
