@@ -16,12 +16,11 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         .from("users")
         .upsert([
           { 
-            id: user.id, 
-            name: user.name, 
             email: user.email,
+            name: user.name, 
             dietary_preferences: [],
           }], {
-          onConflict: "id",
+          onConflict: "email",
         });
 
         if (error) {

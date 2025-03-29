@@ -1,8 +1,23 @@
 'use client';
 
-import Link from 'next/link';
+import { signIn, useSession } from "next-auth/react";
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function Home() {
+  const { status } = useSession();
+  const router = useRouter();
+    
+  useEffect(() => {
+    if (status === 'authenticated') {
+      router.push('/home');
+    }
+  }, [status, router]);
+
+  if (status === 'loading') {
+    return <p>Loading...</p>;
+  }
+
   return (
     <div>
       {/* Navigation Bar */}
@@ -15,11 +30,6 @@ export default function Home() {
         color: 'white',
       }}>
         <h2 style={{ margin: 0 }}>Spark! Bytes</h2>
-        <div>
-          <Link href="/login" style={{ color: 'white', marginRight: '1.5rem', textDecoration: 'none' }}>
-            Log In
-          </Link>
-        </div>
       </nav>
 
       {/* Main Content */}
@@ -47,6 +57,23 @@ export default function Home() {
           resulting from over-purchasing for events and at the same time, help students
           access free food.
         </p>
+        {/* Google Sign In Button */}
+        <button 
+          onClick={() => signIn("google", { 
+            callbackUrl: "/home"
+          })}
+          style={{
+            backgroundColor: '#c00',
+            color: 'white',
+            padding: '0.5rem 1rem',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: 'pointer',
+            margin: '1rem 0'
+          }}
+          >
+          Sign in with Google
+        </button>
       </main>
     </div>
   );
