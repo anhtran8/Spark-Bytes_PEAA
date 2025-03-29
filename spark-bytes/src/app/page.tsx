@@ -20,19 +20,6 @@ export default function Home() {
 
   return (
     <div>
-      {/* Navigation Bar */}
-      <nav style={{
-        backgroundColor: '#c00', // Red BU tone
-        padding: '1rem 2rem',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        color: 'white',
-      }}>
-        <h2 style={{ margin: 0 }}>Spark! Bytes</h2>
-      </nav>
-
-      {/* Main Content */}
       <main style={{
         backgroundColor: '#fff',
         color: '#000',

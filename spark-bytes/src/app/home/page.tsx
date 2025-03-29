@@ -20,31 +20,7 @@ export default function HomePage() {
   }
 
   return (
-    <div>
-      <nav style={{
-        backgroundColor: '#c00', // Red BU tone
-        padding: '1rem 2rem',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        color: 'white',
-      }}>
-        <h2 style={{ margin: 0 }}>Spark! Bytes</h2>
-        <button 
-          onClick={() => signOut({ callbackUrl: '/' })}
-          style={{
-            backgroundColor: 'transparent',
-            color: 'white',
-            border: '1px solid white',
-            borderRadius: '5px',
-            padding: '0.5rem 1rem',
-            cursor: 'pointer',
-          }}
-        >
-          Sign Out
-        </button>
-      </nav>
-      
+    <div>      
       <main style={{
         padding: '2rem',
         maxWidth: '900px',
