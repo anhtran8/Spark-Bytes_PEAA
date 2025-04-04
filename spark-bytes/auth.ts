@@ -1,7 +1,6 @@
-// auth.ts
-import NextAuth from "next-auth"
-import GoogleProvider from "next-auth/providers/google"
-import { supabase } from "./lib/supabase"
+import NextAuth from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
+import { supabase } from "./lib/supabase";
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
   providers: [
@@ -12,23 +11,44 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     async signIn({ user }) {
-      const { data, error } = await supabase
+      // Check if the user already exists in the database
+      const { data: existingUser, error: fetchError } = await supabase
         .from("users")
-        .upsert([
-          { 
-            email: user.email,
-            name: user.name, 
-            dietary_preferences: [],
-          }], {
-          onConflict: "email",
-        });
+        .select("email, dietary_preferences")
+        .eq("email", user.email)
+        .single();
 
-        if (error) {
-          console.error("Error upserting user:", error);
-          return false;
-        }
-        return true;
+      if (fetchError) {
+        console.error("Error fetching user:", fetchError);
+        return false;
+      }
+
+      // If the user exists, keep their existing dietary_preferences
+      const dietaryPreferences = existingUser?.dietary_preferences || [];
+
+      // Upsert the user with their existing dietary_preferences
+      const { error: upsertError } = await supabase
+        .from("users")
+        .upsert(
+          [
+            {
+              email: user.email,
+              name: user.name,
+              dietary_preferences: dietaryPreferences,
+            },
+          ],
+          {
+            onConflict: "email",
+          }
+        );
+
+      if (upsertError) {
+        console.error("Error upserting user:", upsertError);
+        return false;
+      }
+
+      return true;
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
-})
+});
