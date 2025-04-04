@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     Avatar,
     Button,
@@ -39,6 +39,32 @@ const Navbar = () => {
     const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
 
     const open = Boolean(anchorEl);
+
+    // Fetch dietary preferences when the user logs in
+    useEffect(() => {
+        const fetchDietaryPreferences = async () => {
+            if (session?.user?.email) {
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('dietary_preferences')
+                    .eq('email', session.user.email)
+                    .single();
+
+                if (error) {
+                    console.error("Failed to fetch dietary preferences:", error.message);
+                    return;
+                }
+
+                if (data?.dietary_preferences) {
+                    setSelectedOptions(data.dietary_preferences);
+                }
+            }
+        };
+
+        if (isLoggedIn) {
+            fetchDietaryPreferences();
+        }
+    }, [session, isLoggedIn]);
 
     const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
         setAnchorEl(event.currentTarget);
