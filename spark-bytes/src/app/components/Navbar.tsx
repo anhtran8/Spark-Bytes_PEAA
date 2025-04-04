@@ -123,8 +123,8 @@ const Navbar = () => {
                 </Link>
 
                 {isLoggedIn && (
-                    <Link href="/foods" style={{ color: 'white', textDecoration: 'none' }}>
-                        Foods
+                    <Link href="/events" style={{ color: 'white', textDecoration: 'none' }}>
+                        Events
                     </Link>
                 )}
 
