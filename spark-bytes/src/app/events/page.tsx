@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import Link from 'next/link';
+
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
@@ -48,6 +50,11 @@ export default function EventsPage() {
 
   return (
     <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
+      <Link href="/addEvent">
+        <button className="bg-green-500 text-white p-2 rounded mb-4">
+          Add Event
+        </button>
+      </Link>
       <h1>Upcoming Events</h1>
       <ul style={{ listStyle: 'none', padding: 0 }}>
         {events.map(event => (

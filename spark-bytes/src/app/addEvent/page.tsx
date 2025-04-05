@@ -1,56 +1,165 @@
-export default function AboutPage() {
-    return (
-      <div>
-        <main style={{
-          backgroundColor: '#fff',
-          color: '#000',
-          padding: '2rem',
-          fontFamily: 'Arial, sans-serif',
-          maxWidth: '900px',
-          margin: '0 auto',
-        }}>
-          <h1 style={{
-            fontSize: '2.5rem',
-            marginBottom: '1.5rem',
-            color: '#c00',
-          }}>
-            About Spark! Bytes
-          </h1>
-          
-          <section style={{ marginBottom: '2rem' }}>
-            <h2 style={{ color: '#c00', marginBottom: '1rem' }}>Our Mission</h2>
-            <p style={{ fontSize: '1.1rem', lineHeight: '1.6' }}>
-              Spark! Bytes was created to address two important issues in the Boston University community:
-              reducing food waste from campus events and connecting students with free food opportunities.
-            </p>
-          </section>
-          
-          <section style={{ marginBottom: '2rem' }}>
-            <h2 style={{ color: '#c00', marginBottom: '1rem' }}>How It Works</h2>
-            <p style={{ fontSize: '1.1rem', lineHeight: '1.6', marginBottom: '1rem' }}>
-              Event organizers at BU can post when they have excess food from their events. 
-              Students and faculty can browse these postings to find available food near them.
-            </p>
-            <p style={{ fontSize: '1.1rem', lineHeight: '1.6' }}>
-              Our platform helps reduce food waste while ensuring that no student goes hungry due to financial constraints.
-            </p>
-          </section>
-          
-          <section style={{ marginBottom: '2rem' }}>
-            <h2 style={{ color: '#c00', marginBottom: '1rem' }}>Join Us</h2>
-            <p style={{ fontSize: '1.1rem', lineHeight: '1.6' }}>
-              Sign up with your BU email to start posting events or finding free food opportunities around campus.
-              Together, we can build a more sustainable and supportive campus community.
-            </p>
-          </section>
-          
-          <section>
-            <h2 style={{ color: '#c00', marginBottom: '1rem' }}>Contact</h2>
-            <p style={{ fontSize: '1.1rem', lineHeight: '1.6' }}>
-              Have questions or suggestions? Reach out to us at <a href="mailto:sparkbytes@bu.edu" style={{ color: '#c00' }}>sparkbytes@bu.edu</a>
-            </p>
-          </section>
-        </main>
-      </div>
-    );
-  }
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+export default function AddEvent() {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [location, setLocation] = useState('');
+  const [status, setStatus] = useState('');
+  const [createdBy, setCreatedBy] = useState('');
+  const [buildingIndex, setBuildingIndex] = useState('');
+  const [latitude, setLatitude] = useState('');
+  const [longitude, setLongitude] = useState('');
+
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validation can be added here
+
+    // Call the API to add the event
+    // For this example, we'll simply log the event to the console
+    const eventData = {
+      title,
+      description,
+      location,
+      status,
+      created_by: createdBy,
+      building_index: buildingIndex,
+      latitude: parseFloat(latitude),
+      longitude: parseFloat(longitude),
+    };
+
+    console.log('Event Data:', eventData);
+
+    // POST request to API here 
+
+    // Example:
+    // const { data, error } = await supabase.from('events').insert([eventData]);
+
+    // Redirect back to events page after successful submission
+    router.push('/events'); 
+  };
+
+  return (
+    <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
+      <h1>Add New Event</h1>
+      <form onSubmit={handleSubmit}>
+        <div style={{ marginBottom: '1rem' }}>
+          <label htmlFor="title">Title:</label>
+          <input
+            type="text"
+            id="title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
+            required
+          />
+        </div>
+
+        <div style={{ marginBottom: '1rem' }}>
+          <label htmlFor="description">Description:</label>
+          <textarea
+            id="description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
+            required
+          />
+        </div>
+
+        <div style={{ marginBottom: '1rem' }}>
+          <label htmlFor="location">Location:</label>
+          <input
+            type="text"
+            id="location"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
+            required
+          />
+        </div>
+
+        <div style={{ marginBottom: '1rem' }}>
+          <label htmlFor="status">Status:</label>
+          <select
+            id="status"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
+          >
+            <option value="Upcoming">Upcoming</option>
+            <option value="Ongoing">Ongoing</option>
+            <option value="Completed">Completed</option>
+          </select>
+        </div>
+
+        <div style={{ marginBottom: '1rem' }}>
+          <label htmlFor="createdBy">Created By:</label>
+          <input
+            type="text"
+            id="createdBy"
+            value={createdBy}
+            onChange={(e) => setCreatedBy(e.target.value)}
+            style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
+            required
+          />
+        </div>
+
+        <div style={{ marginBottom: '1rem' }}>
+          <label htmlFor="buildingIndex">Building Index:</label>
+          <input
+            type="text"
+            id="buildingIndex"
+            value={buildingIndex}
+            onChange={(e) => setBuildingIndex(e.target.value)}
+            style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
+            required
+          />
+        </div>
+
+        <div style={{ marginBottom: '1rem' }}>
+          <label htmlFor="latitude">Latitude:</label>
+          <input
+            type="text"
+            id="latitude"
+            value={latitude}
+            onChange={(e) => setLatitude(e.target.value)}
+            style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
+            required
+          />
+        </div>
+
+        <div style={{ marginBottom: '1rem' }}>
+          <label htmlFor="longitude">Longitude:</label>
+          <input
+            type="text"
+            id="longitude"
+            value={longitude}
+            onChange={(e) => setLongitude(e.target.value)}
+            style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
+            required
+          />
+        </div>
+
+        <button
+          type="submit"
+          style={{
+            padding: '0.75rem 1.5rem',
+            backgroundColor: '#4CAF50',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            marginTop: '1rem',
+          }}
+        >
+          Add Event
+        </button>
+      </form>
+    </div>
+  );
+}
