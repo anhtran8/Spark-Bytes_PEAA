@@ -3,11 +3,10 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
-
+import { useSession } from 'next-auth/react';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
-
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function EventsPage() {
@@ -24,9 +23,34 @@ export default function EventsPage() {
     created_at: string;
   }
 
+  const { data: session } = useSession();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
+  // only allows add event feature if logged in as admin, if not the button won't display
+  useEffect(() => {
+    async function checkAdminRole() {
+      if (!session?.user?.email) return;
+
+      const { data, error } = await supabase
+        .from('users')
+        .select('role')
+        .eq('email', session.user.email)
+        .single();
+
+      if (error) {
+        console.error('Error checking admin role:', error.message);
+        return;
+      }
+
+      setIsAdmin(data?.role === 'admin');
+    }
+
+    checkAdminRole();
+  }, [session]);
+
+  // Fetch events
   useEffect(() => {
     async function fetchEvents() {
       const { data, error } = await supabase
@@ -41,20 +65,21 @@ export default function EventsPage() {
       }
       setLoading(false);
     }
+
     fetchEvents();
   }, []);
 
-  if (loading) {
-    return <p>Loading...</p>;
-  }
+  if (loading) return <p>Loading...</p>;
 
   return (
     <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
-      <Link href="/addEvent">
-        <button className="bg-green-500 text-white p-2 rounded mb-4">
-          Add Event
-        </button>
-      </Link>
+      {isAdmin && (
+        <Link href="/addEvent">
+          <button className="bg-green-500 text-white p-2 rounded mb-4">
+            Add Event
+          </button>
+        </Link>
+      )}
       <h1>Upcoming Events</h1>
       <ul style={{ listStyle: 'none', padding: 0 }}>
         {events.map(event => (
