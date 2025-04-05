@@ -23,10 +23,10 @@ export default function EventsPage() {
     created_at: string;
   }
 
-  const { data: session } = useSession();
+  const { data: session } = useSession(); // access the user's session data (like their email)
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false); //true if user is admin
 
   // only allows add event feature if logged in as admin, if not the button won't display
   useEffect(() => {
@@ -50,7 +50,7 @@ export default function EventsPage() {
     checkAdminRole();
   }, [session]);
 
-  // Fetch events
+  
   useEffect(() => {
     async function fetchEvents() {
       const { data, error } = await supabase
@@ -74,6 +74,7 @@ export default function EventsPage() {
   return (
     <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
       {isAdmin && (
+        // this button displays only if the user is an admin
         <Link href="/addEvent">
           <button className="bg-green-500 text-white p-2 rounded mb-4">
             Add Event
