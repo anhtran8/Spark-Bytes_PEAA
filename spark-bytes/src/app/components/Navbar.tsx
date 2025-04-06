@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
+import { supabase } from '@/lib/supabase';
 import {
     Avatar,
     Button,
@@ -19,12 +20,6 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize Supabase client
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 const dietaryOptions = [
     'Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free', 'Nut-Free', 
     'Halal', 'Kosher', 'No Pork', 'Low Sugar'
@@ -35,10 +30,13 @@ const Navbar = () => {
     const isLoggedIn = status === 'authenticated';
 
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [eventsAnchorEl, setEventsAnchorEl] = useState<null | HTMLElement>(null); // For Events dropdown
     const [menuView, setMenuView] = useState<'main' | 'dietary'>('main');
     const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
+    const [isAdmin, setIsAdmin] = useState(false); // Check if user is admin
 
     const open = Boolean(anchorEl);
+    const eventsOpen = Boolean(eventsAnchorEl);
 
     // Fetch dietary preferences when the user logs in
     useEffect(() => {
@@ -46,7 +44,7 @@ const Navbar = () => {
             if (session?.user?.email) {
                 const { data, error } = await supabase
                     .from('users')
-                    .select('dietary_preferences')
+                    .select('dietary_preferences, role')
                     .eq('email', session.user.email)
                     .single();
 
@@ -58,6 +56,9 @@ const Navbar = () => {
                 if (data?.dietary_preferences) {
                     setSelectedOptions(data.dietary_preferences);
                 }
+
+                // Check if the user is an admin
+                setIsAdmin(data?.role === 'admin');
             }
         };
 
@@ -71,9 +72,17 @@ const Navbar = () => {
         setMenuView('main');
     };
 
+    const handleEventsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+        setEventsAnchorEl(event.currentTarget);
+    };
+
     const handleClose = () => {
         setAnchorEl(null);
         setMenuView('main');
+    };
+
+    const handleEventsClose = () => {
+        setEventsAnchorEl(null);
     };
 
     const handleChange = (option: string) => {
@@ -123,9 +132,51 @@ const Navbar = () => {
                 </Link>
 
                 {isLoggedIn && (
-                    <Link href="/events" style={{ color: 'white', textDecoration: 'none' }}>
-                        Events
-                    </Link>
+                    <>
+                        <Button
+                            onClick={handleEventsClick}
+                            sx={{
+                                color: 'white',
+                                textTransform: 'none',
+                                border: '1px solid white',
+                                borderRadius: '20px',
+                                padding: '0.3rem 0.8rem',
+                                backgroundColor: 'transparent',
+                                '&:hover': {
+                                    backgroundColor: 'rgba(255,255,255,0.1)',
+                                }
+                            }}
+                        >
+                            Events
+                        </Button>
+
+                        <Menu
+                            anchorEl={eventsAnchorEl}
+                            open={eventsOpen}
+                            onClose={handleEventsClose}
+                            anchorOrigin={{
+                                vertical: 'bottom',
+                                horizontal: 'right',
+                            }}
+                            transformOrigin={{
+                                vertical: 'top',
+                                horizontal: 'right',
+                            }}
+                        >
+                            <MenuItem onClick={handleEventsClose}>
+                                <Link href="/events" style={{ color: 'inherit', textDecoration: 'none' }}>
+                                    All Events
+                                </Link>
+                            </MenuItem>
+                            {isAdmin && (
+                                <MenuItem onClick={handleEventsClose}>
+                                    <Link href="/myEvents" style={{ color: 'inherit', textDecoration: 'none' }}>
+                                        My Events
+                                    </Link>
+                                </MenuItem>
+                            )}
+                        </Menu>
+                    </>
                 )}
 
                 <Link href="/about" style={{ color: 'white', textDecoration: 'none' }}>
