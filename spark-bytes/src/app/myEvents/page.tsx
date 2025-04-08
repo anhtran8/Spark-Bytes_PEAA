@@ -86,6 +86,21 @@ export default function MyEventsPage() {
             <p><strong>Location:</strong> {event.location} ({event.building_index})</p>
             <p><strong>Status:</strong> {event.status}</p>
             <p><strong>Created At:</strong> {new Date(event.created_at).toLocaleString()}</p>
+
+            <button //edit event button
+              onClick={() => router.push(`/editEvent/${event.id}`)}
+              style={{
+                marginTop: '0.5rem',
+                backgroundColor: '#c00',
+                color: 'white',
+                padding: '0.4rem 1rem',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+             Edit Event
+          </button>
           </li>
         ))}
       </ul>
