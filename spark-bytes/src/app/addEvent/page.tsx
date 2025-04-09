@@ -11,6 +11,13 @@ const dietaryOptions = [
   'Halal', 'Kosher', 'No Pork', 'Low Sugar'
 ];
 
+type PlacesLibrary = {
+  PlaceAutocompleteElement: {
+    new (): HTMLElement;
+  };
+};
+
+/* eslint-disable @typescript-eslint/no-namespace */
 // Define the custom element for TypeScript
 declare global {
   namespace JSX {
@@ -19,6 +26,7 @@ declare global {
     }
   }
 }
+/* eslint-enable @typescript-eslint/no-namespace */
 
 export default function AddEvent() {
   const { data: session } = useSession();
@@ -53,7 +61,7 @@ useEffect(() => {
   const initGoogleMaps = async () => {
     try {
       // Import the places library
-      const placesLib = await google.maps.importLibrary("places") as any;
+      const placesLib = await google.maps.importLibrary("places") as unknown as PlacesLibrary;
       console.log("Places library loaded", placesLib); // Debug log
       
       // Clear the container first
@@ -83,9 +91,27 @@ useEffect(() => {
         });
         
         // Handle place selection using the pattern from Google's example
-        placeAutocomplete.addEventListener('gmp-select', async ({ placePrediction }: any) => {
+        placeAutocomplete.addEventListener('gmp-select', async (event: Event) => {
+          const customEvent = event as CustomEvent<{
+            placePrediction: {
+              toPlace: () => {
+                fetchFields: (args: { fields: string[] }) => Promise<void>;
+              };
+            };
+          }>;
+          const placePrediction = customEvent.detail.placePrediction;
           if (placePrediction) {
-            const place = placePrediction.toPlace();
+            const place = placePrediction.toPlace() as unknown as {
+              fetchFields: (args: { fields: string[] }) => Promise<void>;
+              toJSON: () => {
+                formattedAddress?: string;
+                displayName?: string;
+                location?: {
+                  lat: number;
+                  lng: number;
+                };
+              };
+            };
             await place.fetchFields({ 
               fields: ['displayName', 'formattedAddress', 'location'] 
             });
@@ -182,6 +208,7 @@ useEffect(() => {
       return null;
     } catch (error) {
       alert('Error geocoding address');
+      console.error('Error geocoding address:', error);
       return null;
     }
   };

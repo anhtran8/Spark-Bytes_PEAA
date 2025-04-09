@@ -18,7 +18,6 @@ import {
     IconButton
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { createClient } from '@supabase/supabase-js';
 
 const dietaryOptions = [
     'Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free', 'Nut-Free', 
