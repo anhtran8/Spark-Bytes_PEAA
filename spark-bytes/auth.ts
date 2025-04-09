@@ -11,43 +11,49 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     async signIn({ user }) {
-      // Check if the user already exists in the database
-      const { data: existingUser, error: fetchError } = await supabase
-        .from("users")
-        .select("email, dietary_preferences")
-        .eq("email", user.email)
-        .single();
+      try {
+        // Check if the user already exists in the database
+        const { data: existingUser, error: fetchError } = await supabase
+          .from("users")
+          .select("email, dietary_preferences")
+          .eq("email", user.email)
+          .single();
 
-      if (fetchError) {
-        console.error("Error fetching user:", fetchError);
-        return false;
-      }
+        // For new users, Supabase will return a "not found" error
+        // We should continue with the sign-in process in this case
+        let dietaryPreferences = [];
+        
+        // If user exists, use their preferences
+        if (existingUser) {
+          dietaryPreferences = existingUser.dietary_preferences || [];
+        }
 
-      // If the user exists, keep their existing dietary_preferences
-      const dietaryPreferences = existingUser?.dietary_preferences || [];
-
-      // Upsert the user with their existing dietary_preferences
-      const { error: upsertError } = await supabase
-        .from("users")
-        .upsert(
-          [
+        // Upsert the user (update if exists, insert if new)
+        const { error: upsertError } = await supabase
+          .from("users")
+          .upsert(
+            [
+              {
+                email: user.email,
+                name: user.name,
+                dietary_preferences: dietaryPreferences,
+              },
+            ],
             {
-              email: user.email,
-              name: user.name,
-              dietary_preferences: dietaryPreferences,
-            },
-          ],
-          {
-            onConflict: "email",
-          }
-        );
+              onConflict: "email",
+            }
+          );
 
-      if (upsertError) {
-        console.error("Error upserting user:", upsertError);
+        if (upsertError) {
+          console.error("Error upserting user:", upsertError);
+          return false;
+        }
+
+        return true;
+      } catch (error) {
+        console.error("Unexpected error during sign-in:", error);
         return false;
       }
-
-      return true;
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
