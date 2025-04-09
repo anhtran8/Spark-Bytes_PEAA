@@ -11,6 +11,20 @@ const dietaryOptions = [
   'Halal', 'Kosher', 'No Pork', 'Low Sugar'
 ];
 
+declare global {
+  interface Window {
+    google: typeof google;
+  }
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+declare const google: {
+  maps: {
+    importLibrary: (name: string) => Promise<any>; 
+  };
+};
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
 type PlacesLibrary = {
   PlaceAutocompleteElement: {
     new (): HTMLElement;
