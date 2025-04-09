@@ -42,7 +42,7 @@ export default function MyEventsPage() {
       if (error) {
         console.error('Error fetching user-created events:', error.message);
       } else {
-        setEvents(data);
+        setEvents(data || []);
       }
       setLoading(false);
     }
@@ -54,17 +54,14 @@ export default function MyEventsPage() {
     return <p>Loading...</p>;
   }
 
-  if (events.length === 0) {
-    return <p>No events created by you yet.</p>;
-  }
-
   return (
     <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
       <h1>My Events</h1>
-      {/* Add Event Button */}
+      
+      {/* Add Event Button - always shown when session exists */}
       {session && (
         <button
-          onClick={() => router.push('/addEvent')} // Redirect to the Add Event page
+          onClick={() => router.push('/addEvent')}
           style={{
             backgroundColor: '#c00',
             color: 'white',
@@ -78,17 +75,23 @@ export default function MyEventsPage() {
           Add Event
         </button>
       )}
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {events.map(event => (
-          <li key={event.id} style={{ borderBottom: '1px solid #ddd', padding: '1rem 0' }}>
-            <h3>{event.title}</h3>
-            <p>{event.description}</p>
-            <p><strong>Location:</strong> {event.location} ({event.building_index})</p>
-            <p><strong>Status:</strong> {event.status}</p>
-            <p><strong>Created At:</strong> {new Date(event.created_at).toLocaleString()}</p>
-          </li>
-        ))}
-      </ul>
+      
+      {/* Events list or no events message */}
+      {events.length === 0 ? (
+        <p>No events created by you yet.</p>
+      ) : (
+        <ul style={{ listStyle: 'none', padding: 0 }}>
+          {events.map(event => (
+            <li key={event.id} style={{ borderBottom: '1px solid #ddd', padding: '1rem 0' }}>
+              <h3>{event.title}</h3>
+              <p>{event.description}</p>
+              <p><strong>Location:</strong> {event.location} ({event.building_index})</p>
+              <p><strong>Status:</strong> {event.status}</p>
+              <p><strong>Created At:</strong> {new Date(event.created_at).toLocaleString()}</p>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
