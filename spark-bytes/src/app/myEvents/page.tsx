@@ -42,7 +42,7 @@ export default function MyEventsPage() {
       if (error) {
         console.error('Error fetching user-created events:', error.message);
       } else {
-        setEvents(data);
+        setEvents(data || []);
       }
       setLoading(false);
     }
@@ -54,17 +54,14 @@ export default function MyEventsPage() {
     return <p>Loading...</p>;
   }
 
-  if (events.length === 0) {
-    return <p>No events created by you yet.</p>;
-  }
-
   return (
     <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
       <h1>My Events</h1>
-      {/* Add Event Button */}
+      
+      {/* Add Event Button - always shown when session exists */}
       {session && (
         <button
-          onClick={() => router.push('/addEvent')} // Redirect to the Add Event page
+          onClick={() => router.push('/addEvent')}
           style={{
             backgroundColor: '#c00',
             color: 'white',
@@ -86,6 +83,21 @@ export default function MyEventsPage() {
             <p><strong>Location:</strong> {event.location} ({event.building_index})</p>
             <p><strong>Status:</strong> {event.status}</p>
             <p><strong>Created At:</strong> {new Date(event.created_at).toLocaleString()}</p>
+
+            <button //edit event button
+              onClick={() => router.push(`/editEvent/${event.id}`)}
+              style={{
+                marginTop: '0.5rem',
+                backgroundColor: '#c00',
+                color: 'white',
+                padding: '0.4rem 1rem',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+             Edit Event
+          </button>
           </li>
         ))}
       </ul>
