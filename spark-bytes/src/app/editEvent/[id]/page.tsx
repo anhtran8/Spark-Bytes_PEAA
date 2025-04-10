@@ -17,6 +17,20 @@ const dietaryOptions = [
 
 const validStatuses = ['plenty', 'running out', 'gone'];
 
+declare global {
+  interface Window {
+    google: typeof google;
+  }
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+declare const google: {
+  maps: {
+    importLibrary: (name: string) => Promise<any>; 
+  };
+};
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
 /* eslint-disable @typescript-eslint/no-namespace */
 declare global {
   namespace JSX {
