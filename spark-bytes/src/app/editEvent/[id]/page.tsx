@@ -25,7 +25,7 @@ declare global {
     }
   }
 }
-/* eslint-disable @typescript-eslint/no-namespace */
+/* eslint-enable @typescript-eslint/no-namespace */
 
 export default function EditEventPage() {
   const { id } = useParams();
@@ -104,7 +104,7 @@ export default function EditEventPage() {
             }
           }
         });
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
         locationContainerRef.current!.innerHTML = '';
         locationContainerRef.current!.appendChild(placeAutocomplete);
@@ -139,7 +139,7 @@ export default function EditEventPage() {
         placeAutocompleteRef.current.removeEventListener('gmp-select', () => {});
       }
     };
-  }, [isScriptLoaded]);
+  }, [isScriptLoaded, location]);
 
   const handleScriptLoad = () => setIsScriptLoaded(true);
 
