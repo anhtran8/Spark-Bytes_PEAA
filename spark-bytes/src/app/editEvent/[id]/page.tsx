@@ -17,6 +17,7 @@ const dietaryOptions = [
 
 const validStatuses = ['plenty', 'running out', 'gone'];
 
+/* eslint-disable @typescript-eslint/no-namespace */
 declare global {
   namespace JSX {
     interface IntrinsicElements {
@@ -24,6 +25,7 @@ declare global {
     }
   }
 }
+/* eslint-disable @typescript-eslint/no-namespace */
 
 export default function EditEventPage() {
   const { id } = useParams();
@@ -76,7 +78,7 @@ export default function EditEventPage() {
 
   useEffect(() => {
     if (!isScriptLoaded || !locationContainerRef.current) return;
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
     const initGoogleMaps = async () => {
       try {
         const placesLib = await google.maps.importLibrary("places") as any;
@@ -102,6 +104,7 @@ export default function EditEventPage() {
             }
           }
         });
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
         locationContainerRef.current!.innerHTML = '';
         locationContainerRef.current!.appendChild(placeAutocomplete);
