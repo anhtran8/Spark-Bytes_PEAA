@@ -35,6 +35,9 @@ export default function AddEvent() {
   const [dietaryPreferences, setDietaryPreferences] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
+  const [duration, setDuration] = useState(60);
+  const [durationUnit, setDurationUnit] = useState('minutes');  
+
   const placeAutocompleteRef = useRef<HTMLElement | null>(null);
   const locationContainerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -208,6 +211,11 @@ useEffect(() => {
         }
       }
 
+      let expiresAt = new Date();
+
+      const durationInMinutes = durationUnit === 'minutes' ? duration : duration * 60;
+      expiresAt.setMinutes(expiresAt.getMinutes() + durationInMinutes);
+
       const lat = latitude ? parseFloat(latitude) : 0;
       const lng = longitude ? parseFloat(longitude) : 0;
 
@@ -222,6 +230,8 @@ useEffect(() => {
         longitude: lng,
         foods: foodItems,
         dietary_preferences: dietaryPreferences,
+        duration_minutes: durationInMinutes,
+        expires_at: expiresAt.toISOString(),
       };
 
       const { error } = await supabase.from('events').insert([eventData]);
@@ -264,6 +274,29 @@ useEffect(() => {
               style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
               required
             />
+          </div>
+          <div style={{ marginBottom: '1rem' }}>
+            <label htmlFor="duration">Event Duration:</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <input
+                type="number"
+                id="duration"
+                value={duration}
+                onChange={(e) => setDuration(parseInt(e.target.value) || 1)}
+                min="1"
+                max="1440"
+                style={{ width: '80px', padding: '0.5rem' }}
+                required
+              />
+              <select
+                value={durationUnit}
+                onChange={(e) => setDurationUnit(e.target.value)}
+                style={{ padding: '0.5rem' }}
+              >
+                <option value="minutes">Minutes</option>
+                <option value="hours">Hours</option>
+              </select>
+            </div>
           </div>
 
           <div style={{ marginBottom: '1rem' }}>
