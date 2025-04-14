@@ -50,98 +50,69 @@ export default function AddEvent() {
 
   // Initialize Google Maps when script is loaded
   // Only update the useEffect for Google Maps initialization
-useEffect(() => {
-  if (!isScriptLoaded || !locationContainerRef.current) return;
+  useEffect(() => {
+    if (!isScriptLoaded || !locationContainerRef.current) return;
 
-  const initGoogleMaps = async () => {
-    try {
-      // Import the places library
-      const placesLib = await google.maps.importLibrary("places") as any;
-      console.log("Places library loaded", placesLib); // Debug log
-      
-      // Clear the container first
-      if (locationContainerRef.current) {
-        locationContainerRef.current.innerHTML = '';
-        
-        // Create a visible manual input for immediate feedback
-        const input = document.createElement('input');
-        input.placeholder = "Loading place search...";
-        input.style.width = '100%';
-        input.style.padding = '0.5rem';
-        input.style.border = '1px solid #ccc';
-        input.style.borderRadius = '4px';
-        input.style.marginBottom = '10px';
-        locationContainerRef.current.appendChild(input);
-        
-        // Use the direct instantiation method from Google's example
+    const initGoogleMaps = async () => {
+      try {
+        const placesLib = await google.maps.importLibrary("places") as any;
+
+        locationContainerRef.current!.innerHTML = '';
+
         const placeAutocomplete = new placesLib.PlaceAutocompleteElement();
-        
-        // Configure for campus buildings and addresses
         placeAutocomplete.dataset.types = JSON.stringify(['establishment', 'geocode']);
-        
-        // Add Boston University location bias
         placeAutocomplete.dataset.locationBias = JSON.stringify({
           southwest: { lat: 42.3473, lng: -71.1030 },
           northeast: { lat: 42.3531, lng: -71.0894 }
         });
-        
-        // Handle place selection using the pattern from Google's example
+
         placeAutocomplete.addEventListener('gmp-select', async ({ placePrediction }: any) => {
           if (placePrediction) {
             const place = placePrediction.toPlace();
-            await place.fetchFields({ 
-              fields: ['displayName', 'formattedAddress', 'location'] 
-            });
-            
-            // Update state with the place data
+            await place.fetchFields({ fields: ['displayName', 'formattedAddress', 'location'] });
             const placeData = place.toJSON();
-            console.log("Selected place:", placeData); // Debug log
             setLocation(placeData.formattedAddress || placeData.displayName || '');
-            
             if (placeData.location) {
               setLatitude(placeData.location.lat.toString());
               setLongitude(placeData.location.lng.toString());
             }
           }
         });
-        
-        // Remove the temporary input and add the autocomplete element
-        locationContainerRef.current.innerHTML = '';
-        locationContainerRef.current.appendChild(placeAutocomplete);
-        
-        // Store reference for cleanup
-        placeAutocompleteRef.current = placeAutocomplete;
-      }
-    } catch (error) {
-      console.error('Error initializing Google Maps:', error);
-      
-      // If there's an error, at least show a regular input field
-      if (locationContainerRef.current) {
-        locationContainerRef.current.innerHTML = '';
-        const fallbackInput = document.createElement('input');
-        fallbackInput.placeholder = "Enter location manually (autocomplete failed)";
-        fallbackInput.style.width = '100%';
-        fallbackInput.style.padding = '0.5rem';
-        fallbackInput.style.border = '1px solid #ccc';
-        fallbackInput.style.borderRadius = '4px';
-        fallbackInput.value = location;
-        fallbackInput.addEventListener('input', (e) => {
-          const target = e.target as HTMLInputElement;
-          setLocation(target.value);
-        });
-        locationContainerRef.current.appendChild(fallbackInput);
-      }
-    }
-  };
 
-  initGoogleMaps();
-  
-  return () => {
-    if (placeAutocompleteRef.current) {
-      placeAutocompleteRef.current.removeEventListener('gmp-select', () => {});
-    }
-  };
-}, [isScriptLoaded, location]);
+        locationContainerRef.current!.innerHTML = '';
+        locationContainerRef.current!.appendChild(placeAutocomplete);
+        placeAutocompleteRef.current = placeAutocomplete;
+
+      } catch (error) {
+        console.error('Google Maps init error:', error);
+
+        // Fallback input
+        if (locationContainerRef.current) {
+          locationContainerRef.current.innerHTML = '';
+          const fallbackInput = document.createElement('input');
+          fallbackInput.placeholder = "Enter location manually";
+          fallbackInput.value = location;
+          fallbackInput.style.width = '100%';
+          fallbackInput.style.padding = '0.5rem';
+          fallbackInput.style.border = '1px solid #ccc';
+          fallbackInput.style.borderRadius = '4px';
+          fallbackInput.addEventListener('input', (e) => {
+            const target = e.target as HTMLInputElement;
+            setLocation(target.value);
+          });
+          locationContainerRef.current.appendChild(fallbackInput);
+        }
+      }
+    };
+
+    initGoogleMaps();
+
+    return () => {
+      if (placeAutocompleteRef.current) {
+        placeAutocompleteRef.current.removeEventListener('gmp-select', () => {});
+      }
+    };
+  }, [isScriptLoaded]);
 
   const handleScriptLoad = () => {
     setIsScriptLoaded(true);

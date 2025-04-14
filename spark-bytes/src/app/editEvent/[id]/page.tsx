@@ -40,6 +40,10 @@ export default function EditEventPage() {
   const [foodItems, setFoodItems] = useState<string[]>([]);
   const [newFoodItem, setNewFoodItem] = useState('');
   const [dietaryPreferences, setDietaryPreferences] = useState<string[]>([]);
+  const [duration, setDuration] = useState(60); // Default duration in minutes
+  const [durationUnit, setDurationUnit] = useState<'minutes' | 'hours'>('minutes'); // Default unit
+  const [expiresAt, setExpiresAt] = useState<string>(''); // Old expiration time
+  const [dynamicExpiresAt, setDynamicExpiresAt] = useState<string>(''); // Dynamically updated expiration time
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
 
@@ -68,11 +72,38 @@ export default function EditEventPage() {
       setLongitude(data.longitude?.toString() || '');
       setFoodItems(data.foods || []);
       setDietaryPreferences(data.dietary_preferences || []);
+      setExpiresAt(data.expires_at); // Set the old expiration time
+
+      // Set the initial duration and unit
+      if (data.duration_minutes) {
+        const durationInMinutes = data.duration_minutes;
+        if (durationInMinutes >= 60 && durationInMinutes % 60 === 0) {
+          setDuration(durationInMinutes / 60); // Convert to hours if divisible by 60
+          setDurationUnit('hours');
+        } else {
+          setDuration(durationInMinutes); // Keep as minutes
+          setDurationUnit('minutes');
+        }
+      }
+
       setLoading(false);
     }
 
     fetchEvent();
   }, [id]);
+
+  // Function to calculate the new expiration time dynamically
+  const calculateDynamicExpiresAt = () => {
+    const now = new Date();
+    const durationInMinutes = durationUnit === 'minutes' ? duration : duration * 60;
+    now.setMinutes(now.getMinutes() + durationInMinutes);
+    setDynamicExpiresAt(now.toISOString());
+  };
+
+  // Update the dynamic expiration time whenever duration or unit changes
+  useEffect(() => {
+    calculateDynamicExpiresAt();
+  }, [duration, durationUnit]);
 
   useEffect(() => {
     if (!isScriptLoaded || !locationContainerRef.current) return;
@@ -138,6 +169,8 @@ export default function EditEventPage() {
     };
   }, [isScriptLoaded]);
 
+  
+
   const handleScriptLoad = () => setIsScriptLoaded(true);
 
   const handleAddFoodItem = () => {
@@ -170,6 +203,8 @@ export default function EditEventPage() {
       const lat = latitude ? parseFloat(latitude) : 0;
       const lng = longitude ? parseFloat(longitude) : 0;
 
+      const durationInMinutes = durationUnit === 'minutes' ? duration : duration * 60;
+
       const update = {
         title,
         description,
@@ -180,12 +215,14 @@ export default function EditEventPage() {
         longitude: lng,
         foods: foodItems,
         dietary_preferences: dietaryPreferences,
+        duration_minutes: durationInMinutes,
+        expires_at: dynamicExpiresAt, // Save the dynamically calculated expiration time
       };
 
       const { error } = await supabase.from('events').update(update).eq('id', id);
       if (error) throw error;
 
-      alert('Event updated!');
+      alert('Event updated successfully!');
       router.push('/myEvents');
     } catch (err) {
       alert(`Failed to update event: ${err instanceof Error ? err.message : 'Unknown error'}`);
@@ -229,8 +266,31 @@ export default function EditEventPage() {
             </select>
           </div>
 
-          <label>Building Index:</label>
-          <input value={buildingIndex} onChange={e => setBuildingIndex(e.target.value)} required style={{ width: '100%', marginBottom: '1rem' }} />
+          <label>Duration:</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+            <input
+              type="number"
+              value={duration}
+              onChange={(e) => setDuration(parseInt(e.target.value) || 1)}
+              min="1"
+              max="1440"
+              style={{ width: '80px', padding: '0.5rem' }}
+              required
+            />
+            <select
+              value={durationUnit}
+              onChange={(e) => setDurationUnit(e.target.value as 'minutes' | 'hours')}
+              style={{ padding: '0.5rem' }}
+            >
+              <option value="minutes">Minutes</option>
+              <option value="hours">Hours</option>
+            </select>
+          </div>
+
+          <label>Ends At:</label>
+          <p style={{ marginBottom: '1rem', color: '#666' }}>
+            {dynamicExpiresAt ? new Date(dynamicExpiresAt).toLocaleString() : 'Calculating...'}
+          </p>
 
           <label>Food Items:</label>
           <div style={{ display: 'flex', marginBottom: '0.5rem' }}>
