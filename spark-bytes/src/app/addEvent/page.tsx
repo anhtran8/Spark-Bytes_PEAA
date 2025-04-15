@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { supabase } from '@/lib/supabase';
 import Script from 'next/script';
+import { useTheme } from '@mui/material/styles';
+import { TextField, Button, Container, FormControl, InputLabel, OutlinedInput, FormHelperText } from '@mui/material';
 
 const dietaryOptions = [
   'Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free', 'Nut-Free', 
@@ -41,6 +43,7 @@ export default function AddEvent() {
   const placeAutocompleteRef = useRef<HTMLElement | null>(null);
   const locationContainerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const theme = useTheme();
 
   useEffect(() => {
     if (session?.user?.email) {
@@ -49,7 +52,6 @@ export default function AddEvent() {
   }, [session]);
 
   // Initialize Google Maps when script is loaded
-  // Only update the useEffect for Google Maps initialization
   useEffect(() => {
     if (!isScriptLoaded || !locationContainerRef.current) return;
 
@@ -232,175 +234,129 @@ export default function AddEvent() {
         onLoad={handleScriptLoad}
       />
       
-      <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
+      <Container>
         <h1>Add New Event</h1>
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '1rem' }}>
-            <label htmlFor="title">Title:</label>
-            <input
-              type="text"
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
-              required
-            />
-          </div>
-          <div style={{ marginBottom: '1rem' }}>
-            <label htmlFor="duration">Event Duration:</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <input
-                type="number"
-                id="duration"
-                value={duration}
-                onChange={(e) => setDuration(parseInt(e.target.value) || 1)}
-                min="1"
-                max="1440"
-                style={{ width: '80px', padding: '0.5rem' }}
-                required
-              />
-              <select
-                value={durationUnit}
-                onChange={(e) => setDurationUnit(e.target.value)}
-                style={{ padding: '0.5rem' }}
-              >
-                <option value="minutes">Minutes</option>
-                <option value="hours">Hours</option>
-              </select>
-            </div>
-          </div>
-
-          <div style={{ marginBottom: '1rem' }}>
-            <label htmlFor="description">Description:</label>
-            <textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
-              required
-            />
-          </div>
-
-          <div style={{ marginBottom: '1rem' }}>
-          <label>Location:</label>
-          <div 
-            ref={locationContainerRef} 
-            style={{ 
-              marginTop: '0.25rem',
-              minHeight: '40px', // Add minimum height
-              width: '100%',     // Ensure full width
-              position: 'relative' // For proper positioning of dropdown
-            }}
-          >
-            {/* The Google Maps PlaceAutocompleteElement will be inserted here */}
-          </div>
-          
-          {location && (
-            <div style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: '#666' }}>
-              Selected: {location}
-            </div>
-          )}
-        </div>
-
-          <div style={{ marginBottom: '1rem' }}>
-            <label htmlFor="status">Food Status:</label>
-            <select
-              id="status"
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
+          <TextField
+            label="Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            required
+          />
+          <FormControl fullWidth margin="normal" required>
+            <InputLabel shrink htmlFor="location-input">Location</InputLabel>
+            <div
+              style={{
+                border: '1px solid rgba(0, 0, 0, 0.23)',
+                borderRadius: '4px',
+                padding: '0',
+                position: 'relative',
+                minHeight: '56px',
+              }}
             >
-              <option value="plenty">Plenty</option>
-              <option value="running out">Running Out</option>
-              <option value="gone">Gone</option>
+              <div
+                ref={locationContainerRef}
+                style={{ 
+                  width: '100%',
+                  padding: '16.5px 14px',
+                  minHeight: '1.4375em'
+                }}
+              />
+            </div>
+            {location && (
+              <FormHelperText>Selected: {location}</FormHelperText>
+            )}
+          </FormControl>
+  
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1 rem' }}>
+            <TextField
+              label="Duration"
+              type="number"
+              value={duration}
+              onChange={(e) => setDuration(parseInt(e.target.value) || 1)}
+              variant="outlined"
+              size="small"
+              required
+              inputProps={{
+                min: 1, // Min value for input
+                max: 1440, // Max value for input
+              }}
+            />
+            <select
+              value={durationUnit}
+              onChange={(e) => setDurationUnit(e.target.value)}
+            >
+              <option value="minutes">Minutes</option>
+              <option value="hours">Hours</option>
             </select>
           </div>
-
-          <div style={{ marginBottom: '1rem' }}>
-            <label htmlFor="buildingIndex">Building Index:</label>
-            <input
-              type="text"
-              id="buildingIndex"
-              value={buildingIndex}
-              onChange={(e) => setBuildingIndex(e.target.value)}
-              style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
-              required
-            />
-          </div>
-
-          <div style={{ marginBottom: '1rem' }}>
-            <label>Food Items:</label>
-            <div style={{ display: 'flex', marginTop: '0.25rem' }}>
-              <input
-                type="text"
+          <TextField
+            label="Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            fullWidth
+            multiline
+            rows={4}
+            margin="normal"
+            variant="outlined"
+            required
+          />
+          
+          <div>
+            <div>
+              <TextField
+                label="Food Item"
+                variant="outlined"
+                size="small"
                 value={newFoodItem}
                 onChange={(e) => setNewFoodItem(e.target.value)}
-                placeholder="Enter food item"
-                style={{ 
-                  flex: '1', 
-                  padding: '0.5rem',
-                  marginRight: '0.5rem' 
-                }}
+                sx={{ marginRight: 1 }}
               />
-              <button
-                type="button"
-                onClick={handleAddFoodItem}
-                style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#4CAF50',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                }}
-              >
-                +
-              </button>
-            </div>
-
-            {foodItems.length > 0 && (
-              <ul style={{ 
-                listStyle: 'none', 
-                padding: '0.5rem',
-                marginTop: '0.5rem',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                backgroundColor: '#f9f9f9'
-              }}>
+              <Button onClick={handleAddFoodItem}>Add Food</Button>
+              <div className="foodItemsContainer">
                 {foodItems.map((item, index) => (
-                  <li key={index} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                  <div key={index} className="foodItemBox">
                     {item}
-                    <button onClick={() => handleRemoveFoodItem(index)} style={{ marginLeft: '1rem', color: 'red', border: 'none', background: 'none', cursor: 'pointer' }}>
-                      &times;
-                    </button>
-                  </li>
+                    <Button
+                      onClick={() => handleRemoveFoodItem(index)}
+                      sx={{ 
+                        padding: '2px 6px',
+                        fontSize: '1 rem',
+                        borderRadius: '6px',
+                        textTransform: 'none',
+                        minWidth: 'unset'
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  </div>
                 ))}
-              </ul>
-            )}
-          </div>
-
-          <div style={{ marginBottom: '1rem' }}>
-            <label>Dietary Preferences:</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.25rem' }}>
-              {dietaryOptions.map((option) => (
-                <label key={option} style={{ display: 'flex', alignItems: 'center' }}>
-                  <input
-                    type="checkbox"
-                    checked={dietaryPreferences.includes(option)}
-                    onChange={() => handleDietaryPreferenceChange(option)}
-                    style={{ marginRight: '0.25rem' }}
-                  />
-                  {option}
-                </label>
-              ))}
+              </div>
             </div>
           </div>
+          
+          <div>
+            <label>Dietary Preferences:</label>
+            {dietaryOptions.map((option) => (
+              <div key={option}>
+                <input
+                  type="checkbox"
+                  checked={dietaryPreferences.includes(option)}
+                  onChange={() => handleDietaryPreferenceChange(option)}
+                />
+                <span>{option}</span>
+              </div>
+            ))}
+          </div>
 
-          <button type="submit" style={{ padding: '0.75rem 1.5rem', backgroundColor: '#0070f3', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-            {isSubmitting ? 'Submitting...' : 'Submit Event'}
-          </button>
+          <Button type="submit" variant="contained" color="primary" disabled={isSubmitting}>
+            Add Event
+          </Button>
         </form>
-      </div>
+      </Container>
     </>
   );
 }

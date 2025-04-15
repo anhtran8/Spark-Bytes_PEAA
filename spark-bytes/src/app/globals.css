@@ -1,26 +1,27 @@
-/* @import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Customizing Google Maps Autocomplete Input */
+gmp-place-autocomplete-element input {
+  border: 1px solid #ccc !important;
+  font-family: inherit !important;
+  font-size: 1rem !important;
+  width: 100% !important;
+  background-color: transparent !important;
+  outline: none !important;
+  padding: 0.5rem !important;
+  border-radius: 4px !important;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Style the dropdown that appears */
+.pac-container {
+  border-radius: 4px !important;
+  font-family: 'SF Pro Text', -apple-system, sans-serif !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.pac-item {
+  padding: 8px !important;
+  font-size: 0.9rem !important;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-} */
+.pac-item:hover {
+  background-color: #f5f5f5 !important;
+}
