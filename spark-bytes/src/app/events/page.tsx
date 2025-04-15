@@ -115,7 +115,7 @@ export default function EventsPage() {
         </Link>
       )}
       <div>
-        <h2>Search for events</h2>
+        <Typography variant="h5">Search for Events</Typography>
         <label htmlFor="location">Location:</label>
         <select
           id="location"
@@ -160,7 +160,7 @@ export default function EventsPage() {
           Search
         </button>
       </div>
-      <h1>Upcoming Events</h1>
+
       <ul style={{ listStyle: 'none', padding: 0 }}>
         {filteredEvents.map((event) => (
           <li
