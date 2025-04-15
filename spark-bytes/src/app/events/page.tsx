@@ -15,6 +15,7 @@ export default function EventsPage() {
     id: string;
     title: string;
     description: string;
+    dietary_preferences: Array<string>;
     location: string;
     building_index: string;
     latitude: number;
@@ -28,6 +29,9 @@ export default function EventsPage() {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false); // true if user is admin
   const [filter, setFilter] = useState<'current' | 'past'>('current');
+  const [allEvents, setAllEvents] = useState<Event[]>([]); // store all events for filtering
+  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+  const [selectedDiet, setSelectedDiet] = useState<string | null>(null);
 
   useEffect(() => {
     async function checkAdminRole() {
@@ -61,6 +65,7 @@ export default function EventsPage() {
         console.error('Error fetching events:', error);
       } else {
         setEvents(data);
+        setAllEvents(data); // store all events for filtering
       }
       setLoading(false);
     }
@@ -109,7 +114,53 @@ export default function EventsPage() {
           </Button>
         </Link>
       )}
-
+      <div>
+        <h2>Search for events</h2>
+        <label htmlFor="location">Location:</label>
+        <select
+          id="location"
+          value={selectedLocation || ''}
+          onChange={(e) => setSelectedLocation(e.target.value)}
+          style={{ marginLeft: '0.5rem', marginBottom: '1rem' }}
+        >
+          <option value="">All Locations</option> 
+          {[...new Set(allEvents.map(event => event.location))].map((location) => (
+            <option key={location} value={location}>
+              {location}
+            </option>
+          ))}
+        </select>
+        <br />
+        <label htmlFor="diet">Dietary Preference:</label>
+        <select
+          id="diet"
+          value={selectedDiet || ''}
+          onChange={(e) => setSelectedDiet(e.target.value)}
+          style={{ marginLeft: '0.5rem', marginBottom: '1rem' }}
+        >
+          <option value="">All Dietary Preferences</option>
+          {[...new Set(allEvents.flatMap(event => event.dietary_preferences))].map((diet) => (
+            <option key={diet} value={diet}>
+              {diet}
+            </option>  
+          ))}
+        </select>
+        <br />
+        <button
+          onClick={() => {
+            const filteredEvents = allEvents.filter(event => {
+              const matchesLocation = selectedLocation ? event.location === selectedLocation : true;
+              const matchesDiet = selectedDiet ? event.dietary_preferences.includes(selectedDiet) : true;
+              return matchesLocation && matchesDiet;
+            });
+            setEvents(filteredEvents);
+          }}
+          style={{ marginLeft: '0.5rem', padding: '0.5rem 1rem', backgroundColor: '#007bff', color: '#fff', border: 'none', borderRadius: '4px' }}
+        >
+          Search
+        </button>
+      </div>
+      <h1>Upcoming Events</h1>
       <ul style={{ listStyle: 'none', padding: 0 }}>
         {filteredEvents.map((event) => (
           <li
