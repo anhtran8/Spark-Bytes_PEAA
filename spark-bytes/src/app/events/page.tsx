@@ -116,6 +116,25 @@ export default function EventsPage() {
       )}
       <div>
         <Typography variant="h5">Search for Events</Typography>
+          {/*Keyword search*/}
+          <label htmlFor="keyword">Search by keywords:</label>
+        <input
+          type="text"
+          id="keyword"
+          placeholder="Enter keyword"
+          onChange={(e) => {
+            const keyword = e.target.value.toLowerCase();
+            const filteredEvents = allEvents.filter(event => {
+              return (
+                event.title.toLowerCase().includes(keyword) ||
+                event.description.toLowerCase().includes(keyword)
+              );
+            });
+            setEvents(filteredEvents);
+          }}
+          style={{ marginLeft: '0.5rem', marginBottom: '1rem' }}
+        />
+        <br />
         <label htmlFor="location">Location:</label>
         <select
           id="location"
