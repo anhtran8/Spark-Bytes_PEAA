@@ -4,6 +4,19 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Script from 'next/script';
 import { createClient } from '@supabase/supabase-js';
+import { detectCampus } from '../../lib/campusZones';
+import {
+  Container,
+  Typography,
+  TextField,
+  Button,
+  Box,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormHelperText
+} from '@mui/material';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -33,19 +46,18 @@ export default function EditEventPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState('plenty');
-  const [buildingIndex, setBuildingIndex] = useState('');
   const [location, setLocation] = useState('');
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
+  const [campus, setCampus] = useState('');
   const [foodItems, setFoodItems] = useState<string[]>([]);
   const [newFoodItem, setNewFoodItem] = useState('');
   const [dietaryPreferences, setDietaryPreferences] = useState<string[]>([]);
-  const [duration, setDuration] = useState(60); // Default duration in minutes
-  const [durationUnit, setDurationUnit] = useState<'minutes' | 'hours'>('minutes'); // Default unit
-  const [expiresAt, setExpiresAt] = useState<string>(''); // Old expiration time
-  const [dynamicExpiresAt, setDynamicExpiresAt] = useState<string>(''); // Dynamically updated expiration time
+  const [duration, setDuration] = useState(60);
+  const [durationUnit, setDurationUnit] = useState<'minutes' | 'hours'>('minutes');
+  const [expiresAt, setExpiresAt] = useState<string>('');
+  const [dynamicExpiresAt, setDynamicExpiresAt] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isScriptLoaded, setIsScriptLoaded] = useState(false);
 
   const locationContainerRef = useRef<HTMLDivElement>(null);
   const placeAutocompleteRef = useRef<HTMLElement | null>(null);
@@ -66,22 +78,21 @@ export default function EditEventPage() {
       setTitle(data.title);
       setDescription(data.description);
       setStatus(validStatuses.includes(data.status) ? data.status : 'plenty');
-      setBuildingIndex(data.building_index);
       setLocation(data.location);
       setLatitude(data.latitude?.toString() || '');
       setLongitude(data.longitude?.toString() || '');
+      setCampus(data.campus || detectCampus(data.latitude, data.longitude));
       setFoodItems(data.foods || []);
       setDietaryPreferences(data.dietary_preferences || []);
-      setExpiresAt(data.expires_at); // Set the old expiration time
+      setExpiresAt(data.expires_at);
 
-      // Set the initial duration and unit
       if (data.duration_minutes) {
         const durationInMinutes = data.duration_minutes;
         if (durationInMinutes >= 60 && durationInMinutes % 60 === 0) {
-          setDuration(durationInMinutes / 60); // Convert to hours if divisible by 60
+          setDuration(durationInMinutes / 60);
           setDurationUnit('hours');
         } else {
-          setDuration(durationInMinutes); // Keep as minutes
+          setDuration(durationInMinutes);
           setDurationUnit('minutes');
         }
       }
@@ -92,27 +103,21 @@ export default function EditEventPage() {
     fetchEvent();
   }, [id]);
 
-  // Function to calculate the new expiration time dynamically
-  const calculateDynamicExpiresAt = () => {
-    const now = new Date();
-    const durationInMinutes = durationUnit === 'minutes' ? duration : duration * 60;
-    now.setMinutes(now.getMinutes() + durationInMinutes);
-    setDynamicExpiresAt(now.toISOString());
-  };
-
-  // Update the dynamic expiration time whenever duration or unit changes
   useEffect(() => {
-    calculateDynamicExpiresAt();
+    const now = new Date();
+    const minutes = durationUnit === 'minutes' ? duration : duration * 60;
+    now.setMinutes(now.getMinutes() + minutes);
+    setDynamicExpiresAt(now.toISOString());
   }, [duration, durationUnit]);
 
   useEffect(() => {
-    if (!isScriptLoaded || !locationContainerRef.current) return;
-
     const initGoogleMaps = async () => {
       try {
         const placesLib = await google.maps.importLibrary("places") as any;
 
-        locationContainerRef.current!.innerHTML = '';
+        if (!locationContainerRef.current) return;
+
+        locationContainerRef.current.innerHTML = '';
 
         const placeAutocomplete = new placesLib.PlaceAutocompleteElement();
         placeAutocomplete.dataset.types = JSON.stringify(['establishment', 'geocode']);
@@ -128,71 +133,26 @@ export default function EditEventPage() {
             const placeData = place.toJSON();
             setLocation(placeData.formattedAddress || placeData.displayName || '');
             if (placeData.location) {
-              setLatitude(placeData.location.lat.toString());
-              setLongitude(placeData.location.lng.toString());
+              const lat = placeData.location.lat;
+              const lng = placeData.location.lng;
+              setLatitude(lat.toString());
+              setLongitude(lng.toString());
+              setCampus(detectCampus(lat, lng));
             }
           }
         });
 
-        locationContainerRef.current!.innerHTML = '';
-        locationContainerRef.current!.appendChild(placeAutocomplete);
+        locationContainerRef.current.appendChild(placeAutocomplete);
         placeAutocompleteRef.current = placeAutocomplete;
-
       } catch (error) {
         console.error('Google Maps init error:', error);
-
-        // Fallback input
-        if (locationContainerRef.current) {
-          locationContainerRef.current.innerHTML = '';
-          const fallbackInput = document.createElement('input');
-          fallbackInput.placeholder = "Enter location manually";
-          fallbackInput.value = location;
-          fallbackInput.style.width = '100%';
-          fallbackInput.style.padding = '0.5rem';
-          fallbackInput.style.border = '1px solid #ccc';
-          fallbackInput.style.borderRadius = '4px';
-          fallbackInput.addEventListener('input', (e) => {
-            const target = e.target as HTMLInputElement;
-            setLocation(target.value);
-          });
-          locationContainerRef.current.appendChild(fallbackInput);
-        }
       }
     };
 
-    initGoogleMaps();
-
-    return () => {
-      if (placeAutocompleteRef.current) {
-        placeAutocompleteRef.current.removeEventListener('gmp-select', () => {});
-      }
-    };
-  }, [isScriptLoaded]);
-
-  
-
-  const handleScriptLoad = () => setIsScriptLoaded(true);
-
-  const handleAddFoodItem = () => {
-    if (newFoodItem.trim()) {
-      setFoodItems([...foodItems, newFoodItem.trim()]);
-      setNewFoodItem('');
+    if (!placeAutocompleteRef.current && window.google && window.google.maps) {
+      initGoogleMaps();
     }
-  };
-
-  const handleRemoveFoodItem = (index: number) => {
-    const updated = [...foodItems];
-    updated.splice(index, 1);
-    setFoodItems(updated);
-  };
-
-  const handleDietaryPreferenceChange = (option: string) => {
-    if (dietaryPreferences.includes(option)) {
-      setDietaryPreferences(dietaryPreferences.filter(item => item !== option));
-    } else {
-      setDietaryPreferences([...dietaryPreferences, option]);
-    }
-  };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -202,7 +162,6 @@ export default function EditEventPage() {
     try {
       const lat = latitude ? parseFloat(latitude) : 0;
       const lng = longitude ? parseFloat(longitude) : 0;
-
       const durationInMinutes = durationUnit === 'minutes' ? duration : duration * 60;
 
       const update = {
@@ -210,13 +169,13 @@ export default function EditEventPage() {
         description,
         location,
         status,
-        building_index: buildingIndex,
         latitude: lat,
         longitude: lng,
+        campus,
         foods: foodItems,
         dietary_preferences: dietaryPreferences,
         duration_minutes: durationInMinutes,
-        expires_at: dynamicExpiresAt, // Save the dynamically calculated expiration time
+        expires_at: dynamicExpiresAt
       };
 
       const { error } = await supabase.from('events').update(update).eq('id', id);
@@ -234,91 +193,117 @@ export default function EditEventPage() {
   if (loading) return <p>Loading...</p>;
 
   return (
-    <>
-      <Script
-        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places&v=weekly`}
-        onLoad={handleScriptLoad}
-      />
-      <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
-        <h1>Edit Event</h1>
-        <form onSubmit={handleSubmit}>
-          <label>Title:</label>
-          <input value={title} onChange={e => setTitle(e.target.value)} required style={{ width: '100%', marginBottom: '1rem' }} />
+    <Container maxWidth="sm" sx={{ mt: 5 }}>
+      <Typography variant="h4" gutterBottom>
+        Edit Event
+      </Typography>
+      <form onSubmit={handleSubmit}>
+        <TextField
+          label="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          fullWidth
+          margin="normal"
+          required
+        />
 
-          <label>Description:</label>
-          <textarea value={description} onChange={e => setDescription(e.target.value)} required style={{ width: '100%', marginBottom: '1rem' }} />
+        <FormControl fullWidth margin="normal" required>
+          <InputLabel shrink htmlFor="location-input">Location</InputLabel>
+          <Box sx={{ border: '1px solid rgba(0,0,0,0.23)', borderRadius: '4px', minHeight: '56px', p: 2 }}>
+            <div ref={locationContainerRef} />
+          </Box>
+          {location && <FormHelperText sx={{ mt: 1 }}>Selected: {location}</FormHelperText>}
+        </FormControl>
 
-          <label>Location:</label>
-          <div ref={locationContainerRef} style={{ minHeight: '40px', marginBottom: '0.5rem' }} />
-          {location && <div style={{ fontSize: '0.9rem', color: '#666' }}>Selected: {location}</div>}
+        <TextField
+          label="Description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          fullWidth
+          multiline
+          rows={4}
+          margin="normal"
+          required
+        />
 
-          <div style={{ marginBottom: '1rem' }}>
-            <label htmlFor="status">Food Status:</label>
-            <select
-              id="status"
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
-            >
-              <option value="plenty">Plenty</option>
-              <option value="running out">Running Out</option>
-              <option value="gone">Gone</option>
-            </select>
-          </div>
-
-          <label>Duration:</label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-            <input
-              type="number"
-              value={duration}
-              onChange={(e) => setDuration(parseInt(e.target.value) || 1)}
-              min="1"
-              max="1440"
-              style={{ width: '80px', padding: '0.5rem' }}
-              required
-            />
-            <select
+        <Box sx={{ display: 'flex', gap: 2, my: 2 }}>
+          <TextField
+            label="Duration"
+            type="number"
+            value={duration}
+            onChange={(e) => setDuration(parseInt(e.target.value) || 0)}
+            required
+            inputProps={{ min: 1, max: 1440 }}
+            sx={{ flex: 2 }}
+          />
+          <FormControl sx={{ width: '150px' }}>
+            <InputLabel id="duration-unit-label">Unit</InputLabel>
+            <Select
+              labelId="duration-unit-label"
               value={durationUnit}
               onChange={(e) => setDurationUnit(e.target.value as 'minutes' | 'hours')}
-              style={{ padding: '0.5rem' }}
+              label="Unit"
             >
-              <option value="minutes">Minutes</option>
-              <option value="hours">Hours</option>
-            </select>
-          </div>
+              <MenuItem value="minutes">Minutes</MenuItem>
+              <MenuItem value="hours">Hours</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
 
-          <label>Ends At:</label>
-          <p style={{ marginBottom: '1rem', color: '#666' }}>
-            {dynamicExpiresAt ? new Date(dynamicExpiresAt).toLocaleString() : 'Calculating...'}
-          </p>
+        {dynamicExpiresAt && (
+          <FormHelperText sx={{ mt: 1, mb: 3 }}>Ends At: {new Date(dynamicExpiresAt).toLocaleString()} — Campus: {campus}</FormHelperText>
+        )}
 
-          <label>Food Items:</label>
-          <div style={{ display: 'flex', marginBottom: '0.5rem' }}>
-            <input value={newFoodItem} onChange={e => setNewFoodItem(e.target.value)} placeholder="Enter food item" style={{ flex: 1, marginRight: '0.5rem' }} />
-            <button type="button" onClick={handleAddFoodItem}>+</button>
-          </div>
-          {foodItems.map((item, idx) => (
-            <div key={idx} style={{ marginBottom: '0.3rem' }}>
-              {item}
-              <button type="button" onClick={() => handleRemoveFoodItem(idx)} style={{ marginLeft: '1rem', color: 'red' }}>&times;</button>
-            </div>
+        <Typography variant="subtitle1" sx={{ mt: 2 }}>Food Items</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', mt: 1, mb: 2 }}>
+          <TextField
+            label="Food Item"
+            value={newFoodItem}
+            onChange={(e) => setNewFoodItem(e.target.value)}
+            size="small"
+            sx={{ mr: 2 }}
+          />
+          <Button onClick={() => {
+            if (newFoodItem) {
+              setFoodItems([...foodItems, newFoodItem]);
+              setNewFoodItem('');
+            }
+          }}>Add Food</Button>
+        </Box>
+        {foodItems.map((item, i) => (
+          <Box key={i} sx={{ mb: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Typography>{item}</Typography>
+            <Button color="error" size="small" onClick={() => {
+              const updated = [...foodItems];
+              updated.splice(i, 1);
+              setFoodItems(updated);
+            }}>Remove</Button>
+          </Box>
+        ))}
+
+        <Box sx={{ my: 3 }}>
+          <Typography variant="h6">Dietary Preferences</Typography>
+          {dietaryOptions.map(opt => (
+            <Box key={opt} sx={{ display: 'flex', alignItems: 'center' }}>
+              <input
+                type="checkbox"
+                checked={dietaryPreferences.includes(opt)}
+                onChange={() => setDietaryPreferences(prev =>
+                  prev.includes(opt)
+                    ? prev.filter(item => item !== opt)
+                    : [...prev, opt]
+                )}
+                id={`diet-${opt}`}
+              />
+              <label htmlFor={`diet-${opt}`} style={{ marginLeft: 8 }}>{opt}</label>
+            </Box>
           ))}
+        </Box>
 
-          <label>Dietary Preferences:</label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
-            {dietaryOptions.map(option => (
-              <label key={option}>
-                <input type="checkbox" checked={dietaryPreferences.includes(option)} onChange={() => handleDietaryPreferenceChange(option)} />
-                {option}
-              </label>
-            ))}
-          </div>
-
-          <button type="submit" style={{ padding: '0.75rem 1.5rem', backgroundColor: '#0070f3', color: 'white', border: 'none', borderRadius: '4px' }}>
-            {isSubmitting ? 'Saving...' : 'Save Changes'}
-          </button>
-        </form>
-      </div>
-    </>
+        <Button type="submit" variant="contained" color="primary" disabled={isSubmitting} fullWidth>
+          {isSubmitting ? 'Saving...' : 'Save Changes'}
+        </Button>
+      </form>
+    </Container>
   );
 }

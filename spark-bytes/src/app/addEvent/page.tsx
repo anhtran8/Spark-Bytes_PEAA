@@ -6,29 +6,31 @@ import { useSession } from 'next-auth/react';
 import { supabase } from '@/lib/supabase';
 import Script from 'next/script';
 import { useTheme } from '@mui/material/styles';
-import { TextField, Button, Container, FormControl, InputLabel, OutlinedInput, FormHelperText } from '@mui/material';
+import {
+  TextField,
+  Button,
+  Container,
+  FormControl,
+  InputLabel,
+  FormHelperText,
+  Typography,
+  Select,
+  MenuItem,
+  Box
+} from '@mui/material';
+import { detectCampus } from '../lib/campusZones';
 
 const dietaryOptions = [
-  'Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free', 'Nut-Free', 
+  'Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free', 'Nut-Free',
   'Halal', 'Kosher', 'No Pork', 'Low Sugar'
 ];
-
-// Define the custom element for TypeScript
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      'gmp-place-autocomplete-element': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
-    }
-  }
-}
 
 export default function AddEvent() {
   const { data: session } = useSession();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [status, setStatus] = useState('plenty'); 
+  const [status, setStatus] = useState('plenty');
   const [createdBy, setCreatedBy] = useState('');
-  const [buildingIndex, setBuildingIndex] = useState('');
   const [location, setLocation] = useState('');
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
@@ -36,9 +38,9 @@ export default function AddEvent() {
   const [newFoodItem, setNewFoodItem] = useState('');
   const [dietaryPreferences, setDietaryPreferences] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isScriptLoaded, setIsScriptLoaded] = useState(false);
-  const [duration, setDuration] = useState(60);
-  const [durationUnit, setDurationUnit] = useState('minutes');  
+  const [duration, setDuration] = useState<number>(60);
+  const [durationUnit, setDurationUnit] = useState<'minutes' | 'hours'>('minutes');
+  const [dynamicExpiresAt, setDynamicExpiresAt] = useState<string>('');
 
   const placeAutocompleteRef = useRef<HTMLElement | null>(null);
   const locationContainerRef = useRef<HTMLDivElement>(null);
@@ -51,16 +53,15 @@ export default function AddEvent() {
     }
   }, [session]);
 
-  // Initialize Google Maps when script is loaded
   useEffect(() => {
-    if (!isScriptLoaded || !locationContainerRef.current) return;
-
     const initGoogleMaps = async () => {
       try {
+        if (!window.google || !locationContainerRef.current) return;
+        if (placeAutocompleteRef.current) return;
+
         const placesLib = await google.maps.importLibrary("places") as any;
 
-        locationContainerRef.current!.innerHTML = '';
-
+        locationContainerRef.current.innerHTML = '';
         const placeAutocomplete = new placesLib.PlaceAutocompleteElement();
         placeAutocomplete.dataset.types = JSON.stringify(['establishment', 'geocode']);
         placeAutocomplete.dataset.locationBias = JSON.stringify({
@@ -81,116 +82,56 @@ export default function AddEvent() {
           }
         });
 
-        locationContainerRef.current!.innerHTML = '';
-        locationContainerRef.current!.appendChild(placeAutocomplete);
+        locationContainerRef.current.appendChild(placeAutocomplete);
         placeAutocompleteRef.current = placeAutocomplete;
-
       } catch (error) {
         console.error('Google Maps init error:', error);
-
-        // Fallback input
-        if (locationContainerRef.current) {
-          locationContainerRef.current.innerHTML = '';
-          const fallbackInput = document.createElement('input');
-          fallbackInput.placeholder = "Enter location manually";
-          fallbackInput.value = location;
-          fallbackInput.style.width = '100%';
-          fallbackInput.style.padding = '0.5rem';
-          fallbackInput.style.border = '1px solid #ccc';
-          fallbackInput.style.borderRadius = '4px';
-          fallbackInput.addEventListener('input', (e) => {
-            const target = e.target as HTMLInputElement;
-            setLocation(target.value);
-          });
-          locationContainerRef.current.appendChild(fallbackInput);
-        }
       }
     };
 
     initGoogleMaps();
+  }, []);
 
-    return () => {
-      if (placeAutocompleteRef.current) {
-        placeAutocompleteRef.current.removeEventListener('gmp-select', () => {});
-      }
-    };
-  }, [isScriptLoaded]);
-
-  const handleScriptLoad = () => {
-    setIsScriptLoaded(true);
-  };
-
-  // Your existing handler functions remain the same
-  const handleAddFoodItem = () => {
-    if (newFoodItem.trim() !== '') {
-      setFoodItems([...foodItems, newFoodItem.trim()]);
-      setNewFoodItem('');
-    }
-  };
+  useEffect(() => {
+    const now = new Date();
+    const minutes = durationUnit === 'minutes' ? duration : duration * 60;
+    now.setMinutes(now.getMinutes() + minutes);
+    setDynamicExpiresAt(now.toISOString());
+  }, [duration, durationUnit]);
 
   const handleRemoveFoodItem = (index: number) => {
-    const updatedFoodItems = [...foodItems];
-    updatedFoodItems.splice(index, 1);
-    setFoodItems(updatedFoodItems);
+    const updated = [...foodItems];
+    updated.splice(index, 1);
+    setFoodItems(updated);
   };
 
   const handleDietaryPreferenceChange = (option: string) => {
-    if (dietaryPreferences.includes(option)) {
-      setDietaryPreferences(dietaryPreferences.filter(item => item !== option));
-    } else {
-      setDietaryPreferences([...dietaryPreferences, option]);
-    }
-  };
-
-  const getCoordinatesFromAddress = async (address: string) => {
-    try {
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
-      );
-      const data = await response.json();
-
-      if (data.status === 'OK' && data.results.length > 0) {
-        const { lat, lng } = data.results[0].geometry.location;
-        setLatitude(lat.toString());
-        setLongitude(lng.toString());
-        return { lat, lng };
-      }
-      return null;
-    } catch (error) {
-      alert('Error geocoding address');
-      return null;
-    }
+    setDietaryPreferences((prev) =>
+      prev.includes(option)
+        ? prev.filter((item) => item !== option)
+        : [...prev, option]
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (isSubmitting) return;
     setIsSubmitting(true);
 
     try {
-      if (!title || !description || !location) {
+      if (!title || !description || !location || !duration) {
         alert('Please fill in all required fields.');
         setIsSubmitting(false);
         return;
       }
 
-      if ((!latitude || !longitude) && location) {
-        const coords = await getCoordinatesFromAddress(location);
-        if (!coords) {
-          alert('Could not determine coordinates for this location. Please try a different address.');
-          setIsSubmitting(false);
-          return;
-        }
-      }
-
       let expiresAt = new Date();
-
       const durationInMinutes = durationUnit === 'minutes' ? duration : duration * 60;
       expiresAt.setMinutes(expiresAt.getMinutes() + durationInMinutes);
 
       const lat = latitude ? parseFloat(latitude) : 0;
       const lng = longitude ? parseFloat(longitude) : 0;
+      const campus = detectCampus(lat, lng);
 
       const eventData = {
         title,
@@ -198,9 +139,9 @@ export default function AddEvent() {
         location,
         status,
         created_by: createdBy || 'anonymous',
-        building_index: buildingIndex,
         latitude: lat,
         longitude: lng,
+        campus,
         foods: foodItems,
         dietary_preferences: dietaryPreferences,
         duration_minutes: durationInMinutes,
@@ -208,155 +149,117 @@ export default function AddEvent() {
       };
 
       const { error } = await supabase.from('events').insert([eventData]);
-      if (error) {
-        alert(`Failed to add event: ${error.message}`);
-        setIsSubmitting(false);
-        return;
-      }
+      if (error) throw error;
 
       alert('Event added successfully!');
       router.push('/events');
     } catch (err) {
-      if (err instanceof Error) {
-        alert(`Unexpected error: ${err.message}`);
-      } else {
-        alert('An unexpected error occurred. Please try again.');
-      }
+      alert(err instanceof Error ? err.message : 'An unexpected error occurred.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <>
-      <Script
-        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places&v=weekly`}
-        onLoad={handleScriptLoad}
-      />
-      
-      <Container>
-        <h1>Add New Event</h1>
-        <form onSubmit={handleSubmit}>
-          <TextField
-            label="Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            fullWidth
-            margin="normal"
-            variant="outlined"
-            required
-          />
-          <FormControl fullWidth margin="normal" required>
-            <InputLabel shrink htmlFor="location-input">Location</InputLabel>
-            <div
-              style={{
-                border: '1px solid rgba(0, 0, 0, 0.23)',
-                borderRadius: '4px',
-                padding: '0',
-                position: 'relative',
-                minHeight: '56px',
-              }}
-            >
-              <div
-                ref={locationContainerRef}
-                style={{ 
-                  width: '100%',
-                  padding: '16.5px 14px',
-                  minHeight: '1.4375em'
-                }}
-              />
-            </div>
-            {location && (
-              <FormHelperText>Selected: {location}</FormHelperText>
-            )}
-          </FormControl>
-  
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1 rem' }}>
-            <TextField
-              label="Duration"
-              type="number"
-              value={duration}
-              onChange={(e) => setDuration(parseInt(e.target.value) || 1)}
-              variant="outlined"
-              size="small"
-              required
-              inputProps={{
-                min: 1, // Min value for input
-                max: 1440, // Max value for input
-              }}
-            />
-            <select
-              value={durationUnit}
-              onChange={(e) => setDurationUnit(e.target.value)}
-            >
-              <option value="minutes">Minutes</option>
-              <option value="hours">Hours</option>
-            </select>
-          </div>
-          <TextField
-            label="Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            fullWidth
-            multiline
-            rows={4}
-            margin="normal"
-            variant="outlined"
-            required
-          />
-          
-          <div>
-            <div>
-              <TextField
-                label="Food Item"
-                variant="outlined"
-                size="small"
-                value={newFoodItem}
-                onChange={(e) => setNewFoodItem(e.target.value)}
-                sx={{ marginRight: 1 }}
-              />
-              <Button onClick={handleAddFoodItem}>Add Food</Button>
-              <div className="foodItemsContainer">
-                {foodItems.map((item, index) => (
-                  <div key={index} className="foodItemBox">
-                    {item}
-                    <Button
-                      onClick={() => handleRemoveFoodItem(index)}
-                      sx={{ 
-                        padding: '2px 6px',
-                        fontSize: '1 rem',
-                        borderRadius: '6px',
-                        textTransform: 'none',
-                        minWidth: 'unset'
-                      }}
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          
-          <div>
-            <label>Dietary Preferences:</label>
-            {dietaryOptions.map((option) => (
-              <div key={option}>
-                <input
-                  type="checkbox"
-                  checked={dietaryPreferences.includes(option)}
-                  onChange={() => handleDietaryPreferenceChange(option)}
-                />
-                <span>{option}</span>
-              </div>
-            ))}
-          </div>
+    <Container maxWidth="sm" sx={{ mt: 5 }}>
+      <Typography variant="h4" gutterBottom>
+        Add New Event
+      </Typography>
+      <form onSubmit={handleSubmit}>
+        <TextField
+          label="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          fullWidth
+          margin="normal"
+          required
+        />
 
-          <Button type="submit" variant="contained" color="primary" disabled={isSubmitting}>
-            Add Event
+        <FormControl fullWidth margin="normal" required>
+          <InputLabel shrink htmlFor="location-input">Location</InputLabel>
+          <Box sx={{ border: '1px solid rgba(0,0,0,0.23)', borderRadius: '4px', minHeight: '56px', p: 2 }}>
+            <div ref={locationContainerRef} />
+          </Box>
+          {location && <FormHelperText sx={{ mt: 1 }}>Selected: {location}</FormHelperText>}
+        </FormControl>
+
+        <TextField
+          label="Description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          fullWidth
+          multiline
+          rows={4}
+          margin="normal"
+          required
+        />
+
+        <Box sx={{ display: 'flex', gap: 2, my: 2 }}>
+          <TextField
+            label="Duration"
+            type="number"
+            value={duration}
+            onChange={(e) => setDuration(parseInt(e.target.value) || 0)}
+            required
+            inputProps={{ min: 1, max: 1440 }}
+            sx={{ flex: 2 }}
+          />
+          <FormControl sx={{ width: '150px' }}>
+            <InputLabel id="duration-unit-label">Unit</InputLabel>
+            <Select
+              labelId="duration-unit-label"
+              value={durationUnit}
+              onChange={(e) => setDurationUnit(e.target.value as 'minutes' | 'hours')}
+              label="Unit"
+            >
+              <MenuItem value="minutes">Minutes</MenuItem>
+              <MenuItem value="hours">Hours</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+
+        <FormControl fullWidth margin="normal">
+          <FormHelperText>Ends At: {new Date(dynamicExpiresAt).toLocaleString()}</FormHelperText>
+        </FormControl>
+
+        <Box sx={{ my: 2 }}>
+          <TextField
+            label="Food Item"
+            value={newFoodItem}
+            onChange={(e) => setNewFoodItem(e.target.value)}
+            size="small"
+            sx={{ mr: 2 }}
+          />
+          <Button onClick={() => { if (newFoodItem) { setFoodItems([...foodItems, newFoodItem]); setNewFoodItem(''); } }}>
+            Add Food
           </Button>
-        </form>
-      </Container>
-    </>
+        </Box>
+        {foodItems.map((item, i) => (
+          <Box key={i} sx={{ mb: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Typography>{item}</Typography>
+            <Button color="error" size="small" onClick={() => handleRemoveFoodItem(i)}>Remove</Button>
+          </Box>
+        ))}
+
+        <Box sx={{ my: 3 }}>
+          <Typography variant="h6">Dietary Preferences</Typography>
+          {dietaryOptions.map(opt => (
+            <Box key={opt} sx={{ display: 'flex', alignItems: 'center' }}>
+              <input
+                type="checkbox"
+                checked={dietaryPreferences.includes(opt)}
+                onChange={() => handleDietaryPreferenceChange(opt)}
+                id={`diet-${opt}`}
+              />
+              <label htmlFor={`diet-${opt}`} style={{ marginLeft: 8 }}>{opt}</label>
+            </Box>
+          ))}
+        </Box>
+
+        <Button type="submit" variant="contained" color="primary" disabled={isSubmitting} fullWidth>
+          {isSubmitting ? 'Submitting...' : 'Add Event'}
+        </Button>
+      </form>
+    </Container>
   );
 }

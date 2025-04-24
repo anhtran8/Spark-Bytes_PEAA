@@ -1,8 +1,9 @@
 // layout.tsx
 import { SessionProvider } from "next-auth/react";
-import type { Metadata } from "next";;
+import type { Metadata } from "next";
 import Navbar from "./components/Navbar";
 import { ClientThemeProvider } from "./components/ClientThemeProvider";
+import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,11 +18,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <Script
+          src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places,marker&v=weekly`}
+          strategy="beforeInteractive"
+        />
+      </head>
       <body>
-        {/* This part is still server-side */}
         <SessionProvider>
           <Navbar />
-          {/* Client-side ThemeProvider and other components wrapped inside ClientThemeProvider */}
           <ClientThemeProvider>{children}</ClientThemeProvider>
         </SessionProvider>
       </body>
