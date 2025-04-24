@@ -7,12 +7,11 @@ import { Box, Typography, Button } from '@mui/material';
 import MapView from '../components/MapView';
 import { supabase } from '../lib/supabaseClient';
 import EventFilter from '../components/EventFilter';
-import ListView from '../components/ListView';  
 
 interface Event {
   id: string;
   title: string;
-  description: string;
+  description: string[];
   dietary_preferences: string[];
   location: string;
   latitude: number;
@@ -73,6 +72,28 @@ export default function EventsPage() {
     return validTime && matchLoc && matchDiet && matchCampus;
   });
 
+  const sortByNearest = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude: userLat, longitude: userLng } = position.coords;
+        const sorted = [...filteredEvents].sort((a, b) => {
+          const distA = Math.hypot(userLat - a.latitude, userLng - a.longitude);
+          const distB = Math.hypot(userLat - b.latitude, userLng - b.longitude);
+          return distA - distB;
+        });
+        setEvents(sorted);
+      },
+      (error) => {
+        alert('Unable to retrieve your location');
+        console.error(error);
+      }
+    );
+  };
+
   if (loading) return <Typography>Loading...</Typography>;
 
   return (
@@ -106,15 +127,35 @@ export default function EventsPage() {
 
         {/* Main View */}
         <Box sx={{ flexGrow: 1 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mb: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mb: 2 }}>
             <Button variant={viewMode === 'list' ? 'contained' : 'outlined'} onClick={() => setViewMode('list')}>List View</Button>
             <Button variant={viewMode === 'map' ? 'contained' : 'outlined'} onClick={() => setViewMode('map')}>Map View</Button>
+          </Box>
+
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
+            <Button variant="outlined" onClick={sortByNearest}>Sort: Nearest</Button>
           </Box>
 
           {viewMode === 'map' ? (
             <MapView events={filteredEvents.filter(e => e.latitude && e.longitude)} />
           ) : (
-            <ListView events={filteredEvents} />
+            <ul style={{ listStyle: 'none', padding: 0 }}>
+              {filteredEvents.map(event => (
+                <li key={event.id} style={{
+                  borderBottom: '1px solid #ddd',
+                  padding: '1rem 0',
+                  backgroundColor: isExpired(event.expires_at) ? '#f0f0f0' : 'white',
+                  opacity: isExpired(event.expires_at) ? 0.6 : 1,
+                }}>
+                  <Typography variant="h6">{event.title}</Typography>
+                  <Typography>{event.description}</Typography>
+                  <Typography><strong>Location:</strong> {event.location}</Typography>
+                  <Typography><strong>Campus:</strong> {event.campus}</Typography>
+                  <Typography><strong>Status:</strong> {event.status}</Typography>
+                  <Typography><strong>Ends:</strong> {new Date(event.expires_at).toLocaleString()}</Typography>
+                </li>
+              ))}
+            </ul>
           )}
         </Box>
       </Box>
