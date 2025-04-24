@@ -99,7 +99,6 @@ export default function EventsPage() {
   return (
     <Box sx={{ padding: 4, maxWidth: '1200px', margin: '0 auto' }}>
       <Typography variant="h4" sx={{ mb: 3 }}>Events</Typography>
-
       <Box sx={{ display: 'flex', gap: 4 }}>
         {/* Sidebar Filter */}
         <Box sx={{ width: 300 }}>
