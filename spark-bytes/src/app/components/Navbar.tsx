@@ -184,6 +184,10 @@ const Navbar = () => {
                 </Link>
 
                 {isLoggedIn && (
+                    <Link href="/notifications" style={{ color: 'white', textDecoration: 'none' }}>
+                        Notifications
+                    </Link>
+                )}
                     <>
                         <Button
                             onClick={handleClick}
@@ -285,7 +289,6 @@ const Navbar = () => {
                             </Box>
                         </Menu>
                     </>
-                )}
             </div>
         </nav>
     );

@@ -148,8 +148,31 @@ export default function AddEvent() {
         expires_at: expiresAt.toISOString(),
       };
 
-      const { error } = await supabase.from('events').insert([eventData]);
-      if (error) throw error;
+      // Adding Notification feature
+     // Insert the event into the events table and get the inserted row back
+      const { data: insertedEvents, error } = await supabase
+        .from('events')
+        .insert([eventData])
+        .select();
+      // Handle any error or missing data
+      if (error || !insertedEvents || insertedEvents.length === 0) {
+        throw error || new Error('Event not inserted.');
+      }
+      // Get the inserted event so we can reference its ID for the notification
+      const insertedEvent = insertedEvents[0];
+      // Insert a new row into the 'notifications' table with event details
+      const { error: notificationError } = await supabase
+        .from('notifications')
+        .insert([{
+          title: insertedEvent.title,
+          description: insertedEvent.description,
+          event_id: insertedEvent.id,
+        }]);
+      // Handle any error from the notification insert
+      if (notificationError) {
+        console.error('Notification insert error:', notificationError);
+        throw notificationError;
+      }
 
       alert('Event added successfully!');
       router.push('/events');
