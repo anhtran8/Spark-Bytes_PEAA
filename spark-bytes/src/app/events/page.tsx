@@ -6,6 +6,7 @@ import { Box, Typography, Button } from '@mui/material';
 import MapView from '../components/MapView';
 import { supabase } from '../lib/supabaseClient';
 import EventFilter from '../components/EventFilter';
+import { useRouter } from 'next/navigation';
 
 interface Event {
   id: string;
@@ -18,10 +19,13 @@ interface Event {
   campus: string;
   status: string;
   expires_at: string;
+  going_count: number;
 }
 
 export default function EventsPage() {
   const { data: session } = useSession();
+  const router = useRouter();
+
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -46,17 +50,44 @@ export default function EventsPage() {
   }, [session]);
 
   useEffect(() => {
-    supabase
-      .from('events')
-      .select('*')
-      .order('expires_at', { ascending: false })
-      .then(({ data, error }) => {
-        if (!error && data) {
-          setEvents(data);
-          setAllEvents(data);
-        }
+    const fetchEventsWithRsvpCounts = async () => {
+      const { data: eventsData, error: eventsError } = await supabase
+        .from('events')
+        .select('*')
+        .order('expires_at', { ascending: false });
+
+      if (eventsError || !eventsData) {
+        console.error(eventsError);
         setLoading(false);
-      });
+        return;
+      }
+
+      const { data: rsvpData, error: rsvpError } = await supabase
+        .from('rsvps')
+        .select('event_id');
+
+      if (rsvpError || !rsvpData) {
+        console.error(rsvpError);
+        setLoading(false);
+        return;
+      }
+
+      const rsvpCounts = rsvpData.reduce<Record<string, number>>((acc, rsvp) => {
+        acc[rsvp.event_id] = (acc[rsvp.event_id] || 0) + 1;
+        return acc;
+      }, {});
+
+      const merged = eventsData.map(event => ({
+        ...event,
+        going_count: rsvpCounts[event.id] || 0,
+      }));
+
+      setEvents(merged);
+      setAllEvents(merged);
+      setLoading(false);
+    };
+
+    fetchEventsWithRsvpCounts();
   }, []);
 
   const isExpired = (date: string) => new Date() > new Date(date);
@@ -71,6 +102,12 @@ export default function EventsPage() {
     const matchCampus = selectedCampus ? event.campus === selectedCampus : true;
     return validTime && matchLoc && matchDiet && matchCampus;
   });
+
+  useEffect(() => {
+    if (!loading && filter === 'current' && filteredEvents.length === 0) {
+      setFilter('past');
+    }
+  }, [loading, filteredEvents, filter]);
 
   const sortByNearest = () => {
     if (!navigator.geolocation) {
@@ -152,6 +189,65 @@ export default function EventsPage() {
                   <Typography><strong>Campus:</strong> {event.campus}</Typography>
                   <Typography><strong>Status:</strong> {event.status}</Typography>
                   <Typography><strong>Ends:</strong> {new Date(event.expires_at).toLocaleString()}</Typography>
+
+                  <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+                    {isExpired(event.expires_at) ? (
+                      <Button
+                        variant="contained"
+                        disabled
+                        sx={{ backgroundColor: '#ccc', color: 'black' }}
+                      >
+                        Event Ended
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="contained"
+                        color="success"
+                        onClick={async () => {
+                          const userEmail = session?.user?.email;
+                          if (!userEmail) return;
+
+                          const { data: existingRsvp } = await supabase
+                            .from('rsvps')
+                            .select('id')
+                            .eq('user_email', userEmail)
+                            .eq('event_id', event.id)
+                            .maybeSingle();
+
+                          if (existingRsvp) {
+                            alert('You’ve already RSVP’d to this event!');
+                            return;
+                          }
+
+                          const { error } = await supabase
+                            .from('rsvps')
+                            .insert([{ event_id: event.id, user_email: userEmail }]);
+
+                          if (!error) {
+                            setEvents(prev =>
+                              prev.map(e =>
+                                e.id === event.id
+                                  ? { ...e, going_count: (e.going_count || 0) + 1 }
+                                  : e
+                              )
+                            );
+                            setAllEvents(prev =>
+                              prev.map(e =>
+                                e.id === event.id
+                                  ? { ...e, going_count: (e.going_count || 0) + 1 }
+                                  : e
+                              )
+                            );
+                          } else {
+                            console.error(error);
+                          }
+                        }}
+                      >
+                        I’m Going
+                      </Button>
+                    )}
+                    <Typography>{event.going_count || 0} going</Typography>
+                  </Box>
                 </li>
               ))}
             </ul>
