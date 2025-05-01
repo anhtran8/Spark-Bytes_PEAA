@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Script from 'next/script';
 import { createClient } from '@supabase/supabase-js';
 import { detectCampus } from '../../lib/campusZones';
 import {
@@ -31,12 +30,14 @@ const dietaryOptions = [
 const validStatuses = ['plenty', 'running out', 'gone'];
 
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace JSX {
     interface IntrinsicElements {
       'gmp-place-autocomplete-element': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
     }
   }
 }
+
 
 export default function EditEventPage() {
   const { id } = useParams();
@@ -55,6 +56,7 @@ export default function EditEventPage() {
   const [dietaryPreferences, setDietaryPreferences] = useState<string[]>([]);
   const [duration, setDuration] = useState(60);
   const [durationUnit, setDurationUnit] = useState<'minutes' | 'hours'>('minutes');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [expiresAt, setExpiresAt] = useState<string>('');
   const [dynamicExpiresAt, setDynamicExpiresAt] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -113,7 +115,8 @@ export default function EditEventPage() {
   useEffect(() => {
     const initGoogleMaps = async () => {
       try {
-        const placesLib = await google.maps.importLibrary("places") as any;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const placesLib = await window.google.maps.importLibrary("places") as any;
 
         if (!locationContainerRef.current) return;
 
@@ -126,6 +129,7 @@ export default function EditEventPage() {
           northeast: { lat: 42.3531, lng: -71.0894 }
         });
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         placeAutocomplete.addEventListener('gmp-select', async ({ placePrediction }: any) => {
           if (placePrediction) {
             const place = placePrediction.toPlace();

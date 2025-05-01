@@ -1,4 +1,4 @@
-import { Box, Typography, Select, MenuItem, Button, FormControl, InputLabel } from '@mui/material';
+import { Box, Select, MenuItem, Button, FormControl, InputLabel } from '@mui/material';
 import React from 'react';
 
 interface EventFilterProps {
@@ -10,6 +10,7 @@ interface EventFilterProps {
   setSelectedDiet: (diet: string | null) => void;
   selectedCampus: string | null;
   setSelectedCampus: (campus: string | null) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   allEvents: any[];
   applyFilters: () => void;
 }

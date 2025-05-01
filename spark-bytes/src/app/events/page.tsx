@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { Box, Typography, Button } from '@mui/material';
 import MapView from '../components/MapView';
@@ -25,6 +24,7 @@ export default function EventsPage() {
   const { data: session } = useSession();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isAdmin, setIsAdmin] = useState(false);
   const [filter, setFilter] = useState<'current' | 'past'>('current');
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');

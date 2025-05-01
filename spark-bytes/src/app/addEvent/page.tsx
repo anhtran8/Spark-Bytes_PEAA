@@ -4,8 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { supabase } from '@/lib/supabase';
-import Script from 'next/script';
-import { useTheme } from '@mui/material/styles';
+// import { useTheme } from '@mui/material/styles';
 import {
   TextField,
   Button,
@@ -25,10 +24,18 @@ const dietaryOptions = [
   'Halal', 'Kosher', 'No Pork', 'Low Sugar'
 ];
 
+declare global {
+  interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    google: any;
+  }
+}
+
 export default function AddEvent() {
   const { data: session } = useSession();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [status, setStatus] = useState('plenty');
   const [createdBy, setCreatedBy] = useState('');
   const [location, setLocation] = useState('');
@@ -45,7 +52,7 @@ export default function AddEvent() {
   const placeAutocompleteRef = useRef<HTMLElement | null>(null);
   const locationContainerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const theme = useTheme();
+  // const theme = useTheme();
 
   useEffect(() => {
     if (session?.user?.email) {
@@ -59,7 +66,8 @@ export default function AddEvent() {
         if (!window.google || !locationContainerRef.current) return;
         if (placeAutocompleteRef.current) return;
 
-        const placesLib = await google.maps.importLibrary("places") as any;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const placesLib = await window.google.maps.importLibrary("places") as any;
 
         locationContainerRef.current.innerHTML = '';
         const placeAutocomplete = new placesLib.PlaceAutocompleteElement();
@@ -69,6 +77,7 @@ export default function AddEvent() {
           northeast: { lat: 42.3531, lng: -71.0894 }
         });
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         placeAutocomplete.addEventListener('gmp-select', async ({ placePrediction }: any) => {
           if (placePrediction) {
             const place = placePrediction.toPlace();
@@ -125,7 +134,7 @@ export default function AddEvent() {
         return;
       }
 
-      let expiresAt = new Date();
+      const expiresAt = new Date();
       const durationInMinutes = durationUnit === 'minutes' ? duration : duration * 60;
       expiresAt.setMinutes(expiresAt.getMinutes() + durationInMinutes);
 

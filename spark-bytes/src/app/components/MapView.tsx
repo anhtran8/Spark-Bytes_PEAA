@@ -1,3 +1,4 @@
+/// <reference types="google.maps" />
 'use client';
 
 import { useEffect, useRef } from 'react';
@@ -22,8 +23,8 @@ export default function MapView({ events }: Props) {
     if (!window.google || !mapRef.current) return;
 
     const initializeMap = async () => {
-      const { Map } = await google.maps.importLibrary('maps') as google.maps.MapsLibrary;
-      const { AdvancedMarkerElement } = await google.maps.importLibrary('marker') as google.maps.MarkerLibrary;
+      const { Map } = await window.google.maps.importLibrary('maps') as google.maps.MapsLibrary;
+      const { AdvancedMarkerElement } = await window.google.maps.importLibrary('marker') as google.maps.MarkerLibrary;
 
       const map = new Map(mapRef.current!, {
         center: { lat: 42.3505, lng: -71.1054 },
@@ -32,6 +33,7 @@ export default function MapView({ events }: Props) {
       });
 
       events.forEach(event => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const marker = new AdvancedMarkerElement({
           map,
           position: { lat: event.latitude, lng: event.longitude },
