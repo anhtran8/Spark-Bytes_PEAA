@@ -6,7 +6,6 @@ import { Box, Typography, Button } from '@mui/material';
 import MapView from '../components/MapView';
 import { supabase } from '../lib/supabaseClient';
 import EventFilter from '../components/EventFilter';
-import { useRouter } from 'next/navigation';
 
 interface Event {
   id: string;
@@ -25,7 +24,6 @@ interface Event {
 
 export default function EventsPage() {
   const { data: session } = useSession();
-  const router = useRouter();
 
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
