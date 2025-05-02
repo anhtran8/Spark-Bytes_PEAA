@@ -20,6 +20,7 @@ interface Event {
   status: string;
   expires_at: string;
   going_count: number;
+  foods: string[];
 }
 
 export default function EventsPage() {
@@ -189,7 +190,54 @@ export default function EventsPage() {
                   <Typography><strong>Campus:</strong> {event.campus}</Typography>
                   <Typography><strong>Status:</strong> {event.status}</Typography>
                   <Typography><strong>Ends:</strong> {new Date(event.expires_at).toLocaleString()}</Typography>
+                  {/* Display Food Items */}
+                  {event.foods && event.foods.length > 0 && (
+                    <Box sx={{ mt: 1, mb: 1 }}>
+                      <Typography component="div">
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 0.5 }}>
+                          {event.foods.map(item => (
+                            <span
+                              key={item}
+                              style={{
+                                display: 'inline-block',
+                                backgroundColor: '#fff3e0', // Light orange for food items
+                                borderRadius: '16px',
+                                padding: '4px 12px',
+                                fontSize: '0.85rem',
+                                border: '1px solid #ffe0b2'
+                              }}
+                            >
+                              {item}
+                            </span>
+                          ))}
+                        </Box>
+                      </Typography>
+                    </Box>
+                  )}
 
+                  {event.dietary_preferences && event.dietary_preferences.length > 0 && (
+                    <Box sx={{ mt: 1, mb: 1 }}>
+                      <Typography component="div">
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 0.5 }}>
+                          {event.dietary_preferences.map(item => (
+                            <span
+                              key={item}
+                              style={{
+                                display: 'inline-block',
+                                backgroundColor: '#e3f2fd',
+                                borderRadius: '16px',
+                                padding: '4px 12px',
+                                fontSize: '0.85rem',
+                                border: '1px solid #90caf9'
+                              }}
+                            >
+                              {item}
+                            </span>
+                          ))}
+                        </Box>
+                      </Typography>
+                    </Box>
+                  )}
                   <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
                     {isExpired(event.expires_at) ? (
                       <Button
